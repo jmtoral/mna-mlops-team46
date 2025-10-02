@@ -138,3 +138,4 @@ jupyter notebook notebooks/
 
 ## 📜 Licencia
 Este proyecto está bajo la licencia MIT. Ver archivo [LICENSE](LICENSE) para más detalles.
+- Limpieza de datos: primer cambio local
