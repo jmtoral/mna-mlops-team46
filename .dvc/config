@@ -1,4 +1,0 @@
-[core]
-    remote = drive_remote
-['remote "drive_remote"']
-    url = /content/drive/MyDrive/MLOPS CLASE MNA/Proyecto/data/interim
