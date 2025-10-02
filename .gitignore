@@ -8,3 +8,20 @@
 # Asegura que el directorio .dvc y su config sean versionados
 !.dvc/
 !.dvc/config
+
+# Entornos locales
+.venv/
+.env
+.ipynb_checkpoints/
+
+# Datos y artefactos locales (usar DVC en su lugar)
+data/
+models/
+mlruns/
+logs/
+
+# Carpetas temporales/notebooks locales
+notebooks/data/
+notebooks/mna-mlops-team46/
+_UL/
+mna-mlops-team46/
