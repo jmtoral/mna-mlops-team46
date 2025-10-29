@@ -2,6 +2,8 @@
     "f1_score_test": 0.8472222222222222,
     "accuracy_test": 0.7788944723618091,
     "auc_test": 0.8052981705868378,
+    "precision_test": 0.8133333333333334,
+    "recall_test": 0.8840579710144928,
     "bad_rate_test": 0.24623115577889448,
     "params": {
         "objective": "binary:logistic",
