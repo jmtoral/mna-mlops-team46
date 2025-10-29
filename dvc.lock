@@ -54,8 +54,8 @@ stages:
       size: 77492
     - path: german_credit_ml/modeling/train.py
       hash: md5
-      md5: c337889d433b9faf4d6eaf278f2d6b1e
-      size: 7532
+      md5: b8d5c38343fd18aca8e473115bb26f97
+      size: 16904
     params:
       params.yaml:
         train:
@@ -68,14 +68,14 @@ stages:
     outs:
     - path: models/xgboost_model.pkl
       hash: md5
-      md5: 4e07ca4a4981055895071700b3f4f6a4
-      size: 282260
+      md5: 0f234ef1f1af1f077b0c6af3befdf022
+      size: 283573
     - path: reports/figures/training
       hash: md5
-      md5: 5a8a240884b0173a03f5e1e026038d15.dir
-      size: 225138
-      nfiles: 4
+      md5: e072274f05998b4e94d23875c1c9402d.dir
+      size: 233961
+      nfiles: 5
     - path: reports/metrics.json
       hash: md5
-      md5: a3ddf08d7aada531dc83c686c18c0fba
-      size: 1471
+      md5: 5f660e46dfcf902cbfd7878297e7ae44
+      size: 1554
