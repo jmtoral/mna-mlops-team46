@@ -54,8 +54,8 @@ stages:
       size: 77492
     - path: german_credit_ml/modeling/train.py
       hash: md5
-      md5: c93db414e0799801c09fcfa10acfcec4
-      size: 17068
+      md5: b8d5c38343fd18aca8e473115bb26f97
+      size: 16904
     params:
       params.yaml:
         train:
@@ -72,10 +72,10 @@ stages:
       size: 283573
     - path: reports/figures/training
       hash: md5
-      md5: 44e3452fdca0bfb7dfd3452db63bdf90.dir
-      size: 233404
-      nfiles: 4
+      md5: e072274f05998b4e94d23875c1c9402d.dir
+      size: 233961
+      nfiles: 5
     - path: reports/metrics.json
       hash: md5
-      md5: 55c7d4e459d51c117f0352898564530f
+      md5: 5f660e46dfcf902cbfd7878297e7ae44
       size: 1554
