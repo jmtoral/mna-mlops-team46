@@ -1,11 +1,14 @@
 from dataclasses import dataclass
+
 import mlflow
 import mlflow.sklearn
+
 from .config import Cfg
 from .data import load_data, split_data
 from .features import build_preprocessor
-from .modeling import train_and_search, evaluate
+from .modeling import evaluate, train_and_search
 from .viz import log_confusion_matrix, log_pr_roc
+
 
 @dataclass
 class Trainer:
@@ -26,18 +29,26 @@ class Trainer:
         pre = build_preprocessor(X_train)
 
         with mlflow.start_run(run_name=self.cfg.mlflow.run_name) as run:
-            mlflow.set_tags({
-                "stage": "modeling",
-                "framework": "sklearn",
-                "model_family": self.cfg.model.type
-            })
-
-            gs = train_and_search(
-                pre, self.cfg.model.__dict__, self.cfg.tuning.param_grid,
-                X_train, y_train, self.cfg.tuning.cv
+            mlflow.set_tags(
+                {
+                    "stage": "modeling",
+                    "framework": "sklearn",
+                    "model_family": self.cfg.model.type,
+                }
             )
 
-            best_params = {k.replace("clf__", ""): v for k, v in gs.best_params_.items()}
+            gs = train_and_search(
+                pre,
+                self.cfg.model.__dict__,
+                self.cfg.tuning.param_grid,
+                X_train,
+                y_train,
+                self.cfg.tuning.cv,
+            )
+
+            best_params = {
+                k.replace("clf__", ""): v for k, v in gs.best_params_.items()
+            }
             for k, v in best_params.items():
                 mlflow.log_param(k, v)
 
@@ -64,5 +75,5 @@ class Trainer:
                     client.set_registered_model_alias(
                         name=self.cfg.mlflow.register_model,
                         alias=self.cfg.mlflow.register_alias,
-                        version=mv.version
+                        version=mv.version,
                     )

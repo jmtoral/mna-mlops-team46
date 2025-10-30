@@ -16,13 +16,15 @@ preprocesamiento, entrenamiento y evaluación", y hace explícita la
 etapa de preprocesamiento como módulo separado.
 """
 
+from pathlib import Path
 from typing import List
-import pandas as pd
+
 import numpy as np
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 def build_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
@@ -57,23 +59,27 @@ def build_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
 
     # Definir transformador para columnas numéricas
     # Imputación con la mediana y, si se desea, escalado estándar
-    num_transformer = Pipeline(steps=[
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler())
-    ])
+    num_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     # Definir transformador para columnas categóricas
     # Imputación con la moda y codificación one-hot
-    cat_transformer = Pipeline(steps=[
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        (
-            "ohe",
-            OneHotEncoder(
-                handle_unknown="ignore",  # ignora categorías nuevas en inferencia
-                sparse_output=False       # regresa matriz densa (más fácil de serializar)
-            )
-        ),
-    ])
+    cat_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            (
+                "ohe",
+                OneHotEncoder(
+                    handle_unknown="ignore",  # ignora categorías nuevas en inferencia
+                    sparse_output=False,  # regresa matriz densa (más fácil de serializar)
+                ),
+            ),
+        ]
+    )
 
     # Ensamblar ColumnTransformer unificando ambos
     preprocessor = ColumnTransformer(
@@ -81,7 +87,7 @@ def build_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
             ("num", num_transformer, num_cols),
             ("cat", cat_transformer, cat_cols),
         ],
-        remainder="drop"  # descartamos columnas no mapeadas explícitamente
+        remainder="drop",  # descartamos columnas no mapeadas explícitamente
     )
 
     return preprocessor
@@ -115,7 +121,6 @@ if __name__ == "__main__":
     #   python -m german_credit_ml.preprocess
     #
     # Asume que ya existe un dataset limpio en data/processed/*.csv
-    import os
     from pathlib import Path
 
     # Ruta tentativa al conjunto ya limpio (ajusta si tu archivo final limpio tiene otro nombre)
@@ -124,7 +129,9 @@ if __name__ == "__main__":
     csv_candidates = list(processed_dir.glob("*.csv"))
 
     if not csv_candidates:
-        print("[WARN] No se encontró ningún CSV en data/processed. Ejecuta primero la etapa de limpieza.")
+        print(
+            "[WARN] No se encontró ningún CSV en data/processed. Ejecuta primero la etapa de limpieza."
+        )
     else:
         sample_path = csv_candidates[0]
         print(f"[INFO] Cargando muestra desde {sample_path}")
@@ -143,10 +150,10 @@ if __name__ == "__main__":
 
         prep = build_preprocessor(X_sample)
         print("[INFO] Preprocesador construido:", prep)
-        print("[OK] Este módulo puede ser importado por train.py y probado de forma aislada.")
+        print(
+            "[OK] Este módulo puede ser importado por train.py y probado de forma aislada."
+        )
 
-from pathlib import Path
-import pandas as pd
 
 def load_data(path: Path) -> pd.DataFrame:
     """
@@ -154,6 +161,7 @@ def load_data(path: Path) -> pd.DataFrame:
     Separa responsabilidades de IO y preprocesamiento.
     """
     return pd.read_csv(path)
+
 
 def preprocess_data(df):
     """

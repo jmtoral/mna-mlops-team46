@@ -9,13 +9,13 @@ Ajustes:
 - Escanea tanto src/** como <module_name>/**.
 """
 
-import os
+import argparse
 import ast
 import glob
-import argparse
-from typing import List, Dict, Tuple, Optional
-import sys
 import io
+import os
+import sys
+from typing import Dict, List, Optional
 
 # Forzar UTF-8 en Windows
 if sys.stdout.encoding is None or "cp125" in sys.stdout.encoding.lower():
@@ -39,6 +39,7 @@ def parse_args():
         help="Nombre del paquete Python principal (solo para reporte descriptivo)",
     )
     return parser.parse_args()
+
 
 ARGS = parse_args()
 
@@ -142,15 +143,19 @@ def scan_file(py_file: str) -> Dict[str, bool]:
         name = call_name(c)
 
         # Pipeline
-        if name.endswith("sklearn.pipeline.Pipeline") or \
-           name.endswith("pipeline.Pipeline") or \
-           name.endswith("make_pipeline"):
+        if (
+            name.endswith("sklearn.pipeline.Pipeline")
+            or name.endswith("pipeline.Pipeline")
+            or name.endswith("make_pipeline")
+        ):
             flags["pipeline"] = True
 
         # ColumnTransformer
-        if name.endswith("sklearn.compose.ColumnTransformer") or \
-           name.endswith("compose.ColumnTransformer") or \
-           name.endswith("make_column_transformer"):
+        if (
+            name.endswith("sklearn.compose.ColumnTransformer")
+            or name.endswith("compose.ColumnTransformer")
+            or name.endswith("make_column_transformer")
+        ):
             flags["column_transformer"] = True
 
         # SimpleImputer (flexible)
@@ -218,10 +223,7 @@ def scan_file(py_file: str) -> Dict[str, bool]:
             flags["persist"] = True
 
         # MLflow
-        if (
-            name.endswith("mlflow.autolog")
-            or name.endswith("mlflow.sklearn.log_model")
-        ):
+        if name.endswith("mlflow.autolog") or name.endswith("mlflow.sklearn.log_model"):
             flags["mlflow"] = True
 
         # params.yaml
@@ -229,7 +231,11 @@ def scan_file(py_file: str) -> Dict[str, bool]:
             flags["yaml_params"] = True
         if isinstance(c.func, ast.Name) and c.func.id == "open":
             for a in c.args:
-                if isinstance(a, ast.Constant) and isinstance(a.value, str) and "params.yaml" in a.value:
+                if (
+                    isinstance(a, ast.Constant)
+                    and isinstance(a.value, str)
+                    and "params.yaml" in a.value
+                ):
                     flags["yaml_params"] = True
 
     flags["metrics"] = len(metric_names) > 0
@@ -249,10 +255,24 @@ def scan_repo() -> Dict[str, Dict[str, bool]]:
 
 
 def aggregate(results: Dict[str, Dict[str, bool]]) -> Dict[str, float]:
-    agg = {k: False for k in [
-        "pipeline","column_transformer","has_simple_imputer","has_standard_scaler","has_onehot",
-        "tts","metrics","cv","searchcv","random_state","persist","mlflow","yaml_params"
-    ]}
+    agg = {
+        k: False
+        for k in [
+            "pipeline",
+            "column_transformer",
+            "has_simple_imputer",
+            "has_standard_scaler",
+            "has_onehot",
+            "tts",
+            "metrics",
+            "cv",
+            "searchcv",
+            "random_state",
+            "persist",
+            "mlflow",
+            "yaml_params",
+        ]
+    }
     doc_weighted_sum = 0.0
     n_funcs_total = 0
 
@@ -277,7 +297,9 @@ def main():
     results = scan_repo()
     agg = aggregate(results)
 
-    print(pad_to_column("Pipeline (sklearn.pipeline.Pipeline/make_pipeline)", 70), end="")
+    print(
+        pad_to_column("Pipeline (sklearn.pipeline.Pipeline/make_pipeline)", 70), end=""
+    )
     print(tag(agg["pipeline"], REQUIRED))
 
     print(pad_to_column("Preprocesamiento con ColumnTransformer", 70), end="")
@@ -307,7 +329,9 @@ def main():
     print(pad_to_column("Reproducibilidad: uso de random_state", 70), end="")
     print(tag(agg["random_state"], REQUIRED))
 
-    print(pad_to_column("Persistencia/registro del modelo (joblib o MLflow)", 70), end="")
+    print(
+        pad_to_column("Persistencia/registro del modelo (joblib o MLflow)", 70), end=""
+    )
     print(tag(agg["persist"] or agg["mlflow"], RECOMMENDED))
 
     print(pad_to_column("Lectura de configuración (params.yaml)", 70), end="")
@@ -315,41 +339,65 @@ def main():
 
     doc_ok = agg["doc_ratio"] >= 0.5
     print(pad_to_column("Docstrings en funciones de pipeline (>=50%)", 70), end="")
-    print(f"{tag(doc_ok, RECOMMENDED)}   ratio={agg['doc_ratio']:.2f} (sobre {int(agg['n_funcs'])} funciones)")
+    print(
+        f"{tag(doc_ok, RECOMMENDED)}   ratio={agg['doc_ratio']:.2f} (sobre {int(agg['n_funcs'])} funciones)"
+    )
 
     print("\nLeyenda de estados:")
     print("  [PRESENTE]           Regla satisfecha")
-    print("  [FALTA-REQUERIDO]    Debe corregirse para cumplir mejores prácticas mínimas")
+    print(
+        "  [FALTA-REQUERIDO]    Debe corregirse para cumplir mejores prácticas mínimas"
+    )
     print("  [FALTA-RECOMENDADO]  Muy aconsejable para robustez y mantenibilidad")
     print("  [FALTA-OPCIONAL]     Según contexto")
 
     print("\nSugerencias:")
     if not agg["pipeline"]:
-        print(" - Crea un sklearn.pipeline.Pipeline o make_pipeline que encadene preprocesamiento + modelo.")
+        print(
+            " - Crea un sklearn.pipeline.Pipeline o make_pipeline que encadene preprocesamiento + modelo."
+        )
     if not agg["column_transformer"]:
-        print(" - Usa sklearn.compose.ColumnTransformer para separar numéricas/categóricas.")
+        print(
+            " - Usa sklearn.compose.ColumnTransformer para separar numéricas/categóricas."
+        )
     if not agg["has_simple_imputer"]:
         print(" - Añade SimpleImputer para completar faltantes (num y/o cat).")
     if not agg["has_standard_scaler"]:
         print(" - Añade StandardScaler para variables numéricas (si aplica).")
     if not agg["has_onehot"]:
-        print(" - Añade OneHotEncoder(handle_unknown='ignore', sparse_output=False) para categóricas.")
+        print(
+            " - Añade OneHotEncoder(handle_unknown='ignore', sparse_output=False) para categóricas."
+        )
     if not agg["tts"]:
-        print(" - Separa entrenamiento/prueba con train_test_split (estratifica si es clasificación).")
+        print(
+            " - Separa entrenamiento/prueba con train_test_split (estratifica si es clasificación)."
+        )
     if not agg["metrics"]:
-        print(" - Calcula y registra métricas (accuracy/precision/recall/F1/ROC-AUC, etc.).")
+        print(
+            " - Calcula y registra métricas (accuracy/precision/recall/F1/ROC-AUC, etc.)."
+        )
     if not agg["cv"]:
         print(" - Añade cross_val_score para estimar desempeño promedio/varianza.")
     if not agg["searchcv"]:
-        print(" - Aplica GridSearchCV/RandomizedSearchCV con cv>=3 para ajustar hiperparámetros.")
+        print(
+            " - Aplica GridSearchCV/RandomizedSearchCV con cv>=3 para ajustar hiperparámetros."
+        )
     if not agg["random_state"]:
-        print(" - Fija random_state en train_test_split/estimadores/RandomizedSearchCV para reproducibilidad.")
+        print(
+            " - Fija random_state en train_test_split/estimadores/RandomizedSearchCV para reproducibilidad."
+        )
     if not (agg["persist"] or agg["mlflow"]):
-        print(" - Persiste o registra el modelo (joblib.dump) o usa MLflow (autolog/log_model).")
+        print(
+            " - Persiste o registra el modelo (joblib.dump) o usa MLflow (autolog/log_model)."
+        )
     if not agg["yaml_params"]:
-        print(" - Centraliza hiperparámetros/rutas en params.yaml y cárgalos con yaml.safe_load.")
+        print(
+            " - Centraliza hiperparámetros/rutas en params.yaml y cárgalos con yaml.safe_load."
+        )
     if not doc_ok:
-        print(" - Añade docstrings a funciones que construyen el pipeline/entrenan/evalúan.")
+        print(
+            " - Añade docstrings a funciones que construyen el pipeline/entrenan/evalúan."
+        )
 
 
 if __name__ == "__main__":

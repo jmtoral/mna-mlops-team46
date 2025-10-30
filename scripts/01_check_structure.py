@@ -9,12 +9,12 @@ Ajustes:
   (equipo usa 'modeling' para código de entrenamiento/evaluación).
 """
 
-import os
-import glob
 import argparse
-from typing import List, Optional, Tuple
-import sys
+import glob
 import io
+import os
+import sys
+from typing import List, Optional, Tuple
 
 # Forzar stdout/stderr a UTF-8 en Windows
 if sys.stdout.encoding is None or "cp125" in sys.stdout.encoding.lower():
@@ -24,7 +24,9 @@ if sys.stderr.encoding is None or "cp125" in sys.stderr.encoding.lower():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Validador de estructura Cookiecutter Data Science v2")
+    parser = argparse.ArgumentParser(
+        description="Validador de estructura Cookiecutter Data Science v2"
+    )
     parser.add_argument(
         "--project-root",
         default=os.getenv("PROJECT_ROOT", r"C:\dev\mna-mlops-team46"),
@@ -36,6 +38,7 @@ def parse_args():
         help="Nombre del paquete Python al nivel raíz (Cookiecutter v2)",
     )
     return parser.parse_args()
+
 
 ARGS = parse_args()
 
@@ -134,55 +137,146 @@ def build_template_tree() -> Node:
     # aceptar pkg/models o pkg/modeling
     models_like_exists = any_exists([f"{pkg}/models", f"{pkg}/modeling"])
 
-    return Node(f"{ROOT_NAME}/", path=None, importance=REQUIRED, children=[
-        Node("README.md", "README.md", importance=REQUIRED),
-        Node("LICENSE", "LICENSE", importance=RECOMMENDED, optional_note="(opcional pero recomendado)"),
-        Node(".gitignore", ".gitignore", importance=REQUIRED),
-        Node(".env.example", ".env.example", importance=RECOMMENDED, optional_note="(variables, sin secretos)"),
-
-        Node(label_req, None, importance=REQUIRED, exists_override=ok_req),
-
-        Node("Makefile", "Makefile", importance=RECOMMENDED, optional_note="(tareas comunes)"),
-
-        Node("data/", "data", importance=REQUIRED, children=[
-            Node("raw/", "data/raw", importance=REQUIRED, optional_note="(solo lectura)"),
-            Node("interim/", "data/interim", importance=REQUIRED, optional_note="(steps intermedios)"),
-            Node("processed/", "data/processed", importance=REQUIRED, optional_note="(dataset limpio para modeling)"),
-        ]),
-
-        Node("models/", "models", importance=RECOMMENDED, optional_note="(artefactos entrenados)"),
-        Node("notebooks/", "notebooks", importance=RECOMMENDED,
-             optional_note="(numerados: 0x-autor-propósito)"),
-        Node("reports/", "reports", importance=RECOMMENDED, optional_note="(figuras, tablas)"),
-
-        Node(f"{pkg}/", f"{pkg}", importance=REQUIRED,
-             optional_note="(paquete Python principal del proyecto)", children=[
-            Node("__init__.py", f"{pkg}/__init__.py", importance=REQUIRED),
-            Node("data/", f"{pkg}/data", importance=RECOMMENDED, optional_note="(IO de datos)"),
-            Node("features/", f"{pkg}/features", importance=RECOMMENDED, optional_note="(featurización)"),
-            Node("models/ (o modeling/)", f"{pkg}/models", importance=RECOMMENDED,
-                 optional_note="(train, predict, evaluate)",
-                 exists_override=models_like_exists),
-            Node("utils/", f"{pkg}/utils", importance=RECOMMENDED,
-                 optional_note="(helpers/utilidades compartidas)"),
-        ]),
-
-        Node("tests/", "tests", importance=RECOMMENDED, optional_note="(pytest)"),
-
-        Node("dvc.yaml", "dvc.yaml", importance=OPTIONAL, optional_note="(si usas DVC)"),
-        Node("params.yaml", "params.yaml", importance=RECOMMENDED, optional_note="(hiperparámetros/config)"),
-        Node("mlruns/", "mlruns", importance=OPTIONAL,
-             optional_note="(si MLflow local)", right_note="← puede estar ignorado"),
-        Node(".pre-commit-config.yaml", ".pre-commit-config.yaml", importance=RECOMMENDED,
-             optional_note="(formato/linters)"),
-    ])
+    return Node(
+        f"{ROOT_NAME}/",
+        path=None,
+        importance=REQUIRED,
+        children=[
+            Node("README.md", "README.md", importance=REQUIRED),
+            Node(
+                "LICENSE",
+                "LICENSE",
+                importance=RECOMMENDED,
+                optional_note="(opcional pero recomendado)",
+            ),
+            Node(".gitignore", ".gitignore", importance=REQUIRED),
+            Node(
+                ".env.example",
+                ".env.example",
+                importance=RECOMMENDED,
+                optional_note="(variables, sin secretos)",
+            ),
+            Node(label_req, None, importance=REQUIRED, exists_override=ok_req),
+            Node(
+                "Makefile",
+                "Makefile",
+                importance=RECOMMENDED,
+                optional_note="(tareas comunes)",
+            ),
+            Node(
+                "data/",
+                "data",
+                importance=REQUIRED,
+                children=[
+                    Node(
+                        "raw/",
+                        "data/raw",
+                        importance=REQUIRED,
+                        optional_note="(solo lectura)",
+                    ),
+                    Node(
+                        "interim/",
+                        "data/interim",
+                        importance=REQUIRED,
+                        optional_note="(steps intermedios)",
+                    ),
+                    Node(
+                        "processed/",
+                        "data/processed",
+                        importance=REQUIRED,
+                        optional_note="(dataset limpio para modeling)",
+                    ),
+                ],
+            ),
+            Node(
+                "models/",
+                "models",
+                importance=RECOMMENDED,
+                optional_note="(artefactos entrenados)",
+            ),
+            Node(
+                "notebooks/",
+                "notebooks",
+                importance=RECOMMENDED,
+                optional_note="(numerados: 0x-autor-propósito)",
+            ),
+            Node(
+                "reports/",
+                "reports",
+                importance=RECOMMENDED,
+                optional_note="(figuras, tablas)",
+            ),
+            Node(
+                f"{pkg}/",
+                f"{pkg}",
+                importance=REQUIRED,
+                optional_note="(paquete Python principal del proyecto)",
+                children=[
+                    Node("__init__.py", f"{pkg}/__init__.py", importance=REQUIRED),
+                    Node(
+                        "data/",
+                        f"{pkg}/data",
+                        importance=RECOMMENDED,
+                        optional_note="(IO de datos)",
+                    ),
+                    Node(
+                        "features/",
+                        f"{pkg}/features",
+                        importance=RECOMMENDED,
+                        optional_note="(featurización)",
+                    ),
+                    Node(
+                        "models/ (o modeling/)",
+                        f"{pkg}/models",
+                        importance=RECOMMENDED,
+                        optional_note="(train, predict, evaluate)",
+                        exists_override=models_like_exists,
+                    ),
+                    Node(
+                        "utils/",
+                        f"{pkg}/utils",
+                        importance=RECOMMENDED,
+                        optional_note="(helpers/utilidades compartidas)",
+                    ),
+                ],
+            ),
+            Node("tests/", "tests", importance=RECOMMENDED, optional_note="(pytest)"),
+            Node(
+                "dvc.yaml",
+                "dvc.yaml",
+                importance=OPTIONAL,
+                optional_note="(si usas DVC)",
+            ),
+            Node(
+                "params.yaml",
+                "params.yaml",
+                importance=RECOMMENDED,
+                optional_note="(hiperparámetros/config)",
+            ),
+            Node(
+                "mlruns/",
+                "mlruns",
+                importance=OPTIONAL,
+                optional_note="(si MLflow local)",
+                right_note="← puede estar ignorado",
+            ),
+            Node(
+                ".pre-commit-config.yaml",
+                ".pre-commit-config.yaml",
+                importance=RECOMMENDED,
+                optional_note="(formato/linters)",
+            ),
+        ],
+    )
 
 
 def pad_to_column(text: str, col: int) -> str:
     return text if len(text) >= col else text + " " * (col - len(text))
 
 
-def render_tree(node: Node, prefix: str = "", is_last: bool = True, right_note_col: int = 70):
+def render_tree(
+    node: Node, prefix: str = "", is_last: bool = True, right_note_col: int = 70
+):
     connector = "└─ " if is_last else "├─ "
     line_prefix = prefix + connector if prefix else ""
     line = f"{line_prefix}{node.label}"

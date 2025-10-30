@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -20,14 +21,21 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 
 # Ensure directories exist
 for d in [
-    DATA_DIR, RAW_DATA_DIR, INTERIM_DATA_DIR, PROCESSED_DATA_DIR,
-    EXTERNAL_DATA_DIR, MODELS_DIR, REPORTS_DIR, FIGURES_DIR
+    DATA_DIR,
+    RAW_DATA_DIR,
+    INTERIM_DATA_DIR,
+    PROCESSED_DATA_DIR,
+    EXTERNAL_DATA_DIR,
+    MODELS_DIR,
+    REPORTS_DIR,
+    FIGURES_DIR,
 ]:
     d.mkdir(parents=True, exist_ok=True)
 
 # Configure loguru with tqdm if available
 try:
     from tqdm import tqdm
+
     logger.remove(0)
     logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
 except ModuleNotFoundError:

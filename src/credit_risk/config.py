@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
+
 import yaml
+
 
 @dataclass
 class DataCfg:
@@ -9,16 +11,19 @@ class DataCfg:
     test_size: float
     random_state: int
 
+
 @dataclass
 class ModelCfg:
     type: str
     class_weight: Optional[str] = None
     n_jobs: int = -1
 
+
 @dataclass
 class TuningCfg:
     cv: int
     param_grid: dict
+
 
 @dataclass
 class MlflowCfg:
@@ -28,12 +33,14 @@ class MlflowCfg:
     register_model: Optional[str] = None
     register_alias: Optional[str] = None
 
+
 @dataclass
 class Cfg:
     data: DataCfg
     model: ModelCfg
     tuning: TuningCfg
     mlflow: MlflowCfg
+
 
 def load_cfg(path: str = "params.yaml") -> Cfg:
     with open(path, "r", encoding="utf-8") as f:
@@ -42,5 +49,5 @@ def load_cfg(path: str = "params.yaml") -> Cfg:
         data=DataCfg(**y["data"]),
         model=ModelCfg(**y["model"]),
         tuning=TuningCfg(**y["tuning"]),
-        mlflow=MlflowCfg(**y["mlflow"])
+        mlflow=MlflowCfg(**y["mlflow"]),
     )

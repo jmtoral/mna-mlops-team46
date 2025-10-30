@@ -1,7 +1,8 @@
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-import pandas as pd
+
 
 def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
     numeric_features = list(X.columns)
@@ -9,6 +10,6 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
     pre = ColumnTransformer(
         transformers=[("num", numeric_transformer, numeric_features)],
         remainder="drop",
-        sparse_threshold=0.3
+        sparse_threshold=0.3,
     )
     return pre

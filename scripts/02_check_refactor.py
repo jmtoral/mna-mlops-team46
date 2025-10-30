@@ -8,13 +8,13 @@ Ajustes:
   como válidos para las responsabilidades de entrenamiento y evaluación.
 """
 
-import os
+import argparse
 import ast
 import glob
-import argparse
-from typing import List, Tuple, Optional, Dict
-import sys
 import io
+import os
+import sys
+from typing import Dict, List, Optional, Tuple
 
 # Forzar UTF-8 en Windows
 if sys.stdout.encoding is None or "cp125" in sys.stdout.encoding.lower():
@@ -24,7 +24,9 @@ if sys.stderr.encoding is None or "cp125" in sys.stderr.encoding.lower():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Validador de refactorización/modularización")
+    parser = argparse.ArgumentParser(
+        description="Validador de refactorización/modularización"
+    )
     parser.add_argument(
         "--project-root",
         default=os.getenv("PROJECT_ROOT", r"C:\dev\mna-mlops-team46"),
@@ -36,6 +38,7 @@ def parse_args():
         help="Nombre del paquete Python principal (por ejemplo german_credit_ml)",
     )
     return parser.parse_args()
+
 
 ARGS = parse_args()
 
@@ -79,9 +82,12 @@ MODULE_PATTERNS = {
 }
 
 EXPECTED_FUNCS = {
-    "preprocess.py": [["load_", "read_", "ingest_", "get_"], ["preprocess", "transform", "clean"]],
-    "train.py":      [["train", "fit"], ["save_", "log_", "register_", "mlflow", "dvc"]],
-    "evaluate.py":   [["evaluate", "score", "metrics", "report"], []],
+    "preprocess.py": [
+        ["load_", "read_", "ingest_", "get_"],
+        ["preprocess", "transform", "clean"],
+    ],
+    "train.py": [["train", "fit"], ["save_", "log_", "register_", "mlflow", "dvc"]],
+    "evaluate.py": [["evaluate", "score", "metrics", "report"], []],
 }
 
 SUGGESTED_CLASSES = ["ModelTrainer", "DataPipeline"]
@@ -179,7 +185,10 @@ def check_functions_responsibility(py_file: str, logical_name: str) -> Tuple[boo
         if not group:
             continue
         if not any(name_matches_any(fn_name, group) for fn_name in public):
-            return False, f"No se detectó función que cumpla prefijos esperados: {group}"
+            return (
+                False,
+                f"No se detectó función que cumpla prefijos esperados: {group}",
+            )
     return True, "OK"
 
 
@@ -279,9 +288,13 @@ def main():
 
     if oop_hits:
         for p, h in oop_hits:
-            print(f"{('Clase ' + h):30}{state_tag(True, RECOMMENDED)}   {os.path.relpath(p)}")
+            print(
+                f"{('Clase ' + h):30}{state_tag(True, RECOMMENDED)}   {os.path.relpath(p)}"
+            )
     else:
-        print(f"{'Clases sugeridas':30}{state_tag(False, RECOMMENDED)}   No se detectaron {SUGGESTED_CLASSES}")
+        print(
+            f"{'Clases sugeridas':30}{state_tag(False, RECOMMENDED)}   No se detectaron {SUGGESTED_CLASSES}"
+        )
 
     print_header("Pruebas unitarias básicas (pytest)")
     has_tests, test_files = check_tests_presence()
@@ -292,8 +305,9 @@ def main():
     )
 
     print_header("Buenas prácticas (docstrings, type hints, main guard)")
-    py_files = sorted(glob.glob(f"{MODULE_NAME}/**/*.py", recursive=True)) + \
-               sorted(glob.glob("src/**/*.py", recursive=True))
+    py_files = sorted(glob.glob(f"{MODULE_NAME}/**/*.py", recursive=True)) + sorted(
+        glob.glob("src/**/*.py", recursive=True)
+    )
     q = check_quality(py_files)
 
     doc_ok = q["doc_ratio"] >= MIN_DOCSTRING_RATIO
@@ -319,15 +333,13 @@ def main():
                 f"Falta guardia en {os.path.relpath(f)}"
             )
     else:
-        print(
-            f"{'__main__ en scripts':30}"
-            f"{state_tag(True, RECOMMENDED)}   "
-            f"OK"
-        )
+        print(f"{'__main__ en scripts':30}" f"{state_tag(True, RECOMMENDED)}   " f"OK")
 
     print("\nLeyenda de estados:")
     print("  [PRESENTE]           Regla satisfecha")
-    print("  [FALTA-REQUERIDO]    Debe corregirse para cumplir la refactorización mínima")
+    print(
+        "  [FALTA-REQUERIDO]    Debe corregirse para cumplir la refactorización mínima"
+    )
     print("  [FALTA-RECOMENDADO]  Muy aconsejable para mantenibilidad/testabilidad")
     print("  [FALTA-OPCIONAL]     Depende del contexto del proyecto")
 
@@ -335,17 +347,27 @@ def main():
     if not present_pre:
         print(f" - Crea {MODULE_NAME}/preprocess.py (carga/limpieza/features).")
     if not present_train:
-        print(f" - Crea {MODULE_NAME}/modeling/train.py (entrenamiento; logging de métricas y artefactos).")
+        print(
+            f" - Crea {MODULE_NAME}/modeling/train.py (entrenamiento; logging de métricas y artefactos)."
+        )
     if not present_eval:
-        print(f" - Crea {MODULE_NAME}/modeling/evaluate.py (evaluación y reporte de métricas).")
+        print(
+            f" - Crea {MODULE_NAME}/modeling/evaluate.py (evaluación y reporte de métricas)."
+        )
     if not has_tests:
-        print(" - Agrega tests en tests/test_*.py (al menos lectura de datos, preprocess y métrica principal).")
+        print(
+            " - Agrega tests en tests/test_*.py (al menos lectura de datos, preprocess y métrica principal)."
+        )
     if not doc_ok:
-        print(" - Añade docstrings breves a funciones públicas (qué hace, entradas, salidas).")
+        print(
+            " - Añade docstrings breves a funciones públicas (qué hace, entradas, salidas)."
+        )
     if not ann_ok:
         print(" - Añade anotaciones de tipos en funciones clave (mejora lint/CI).")
     if need_main_guard:
-        print(" - Añade guardia if __name__ == '__main__': en train.py/evaluate.py si se ejecutan directo.")
+        print(
+            " - Añade guardia if __name__ == '__main__': en train.py/evaluate.py si se ejecutan directo."
+        )
 
 
 if __name__ == "__main__":

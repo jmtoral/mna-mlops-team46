@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 
@@ -24,13 +24,13 @@ class EDAVisualizer:
 
     def plot_histograms(self):
         """Genera histogramas de columnas numéricas."""
-        numeric_cols = ['age', 'amount', 'duration']
+        numeric_cols = ["age", "amount", "duration"]
         for col in numeric_cols:
             plt.figure(figsize=(10, 6))
             sns.histplot(self.df[col], kde=True)
-            plt.title(f'Distribución de {col.capitalize()}', fontsize=16)
+            plt.title(f"Distribución de {col.capitalize()}", fontsize=16)
             plt.xlabel(col.capitalize())
-            plt.ylabel('Frecuencia')
+            plt.ylabel("Frecuencia")
             plt.tight_layout()
 
             output_file = self.output_dir / f"hist_{col}.png"
@@ -41,10 +41,10 @@ class EDAVisualizer:
     def plot_target_distribution(self):
         """Genera una gráfica de barras para la variable objetivo."""
         plt.figure(figsize=(8, 6))
-        sns.countplot(x='credit_risk', data=self.df)
-        plt.title('Distribución del Riesgo Crediticio (Target)', fontsize=16)
-        plt.xlabel('Riesgo Crediticio (0 = Malo, 1 = Bueno)')
-        plt.ylabel('Conteo')
+        sns.countplot(x="credit_risk", data=self.df)
+        plt.title("Distribución del Riesgo Crediticio (Target)", fontsize=16)
+        plt.xlabel("Riesgo Crediticio (0 = Malo, 1 = Bueno)")
+        plt.ylabel("Conteo")
         plt.tight_layout()
 
         output_file = self.output_dir / "bar_credit_risk.png"
@@ -55,10 +55,10 @@ class EDAVisualizer:
     def plot_correlation_heatmap(self):
         """Genera un mapa de calor de correlaciones numéricas."""
         plt.figure(figsize=(16, 12))
-        df_numeric = self.df.select_dtypes(include='number')
+        df_numeric = self.df.select_dtypes(include="number")
         corr = df_numeric.corr()
-        sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', linewidths=.5)
-        plt.title('Mapa de Calor de Correlaciones', fontsize=18)
+        sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5)
+        plt.title("Mapa de Calor de Correlaciones", fontsize=18)
         plt.tight_layout()
 
         output_file = self.output_dir / "heatmap_correlation.png"
@@ -84,13 +84,13 @@ def main():
         "--input-data",
         type=str,
         required=True,
-        help="Ruta al archivo CSV de datos limpios."
+        help="Ruta al archivo CSV de datos limpios.",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
         required=True,
-        help="Directorio donde se guardarán las gráficas."
+        help="Directorio donde se guardarán las gráficas.",
     )
     args = parser.parse_args()
 

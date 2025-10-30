@@ -1,7 +1,10 @@
 from pathlib import Path
 import pickle
+
 import pandas as pd
+
 from .train import Evaluator, ShapInterpreter  # reutilizamos las clases existentes
+
 
 def evaluate_model(model_path: Path, test_csv: Path, target_col: str, output_dir: Path):
     """
@@ -22,13 +25,18 @@ def evaluate_model(model_path: Path, test_csv: Path, target_col: str, output_dir
 
     output_dir.mkdir(parents=True, exist_ok=True)
     Evaluator.plot_confusion_matrix(y_test, y_pred, output_dir / "confusion_matrix.png")
-    Evaluator.plot_roc(y_test, y_proba, output_dir / "roc_curve.png", metrics.get("auc_test", 0.0))
+    Evaluator.plot_roc(
+        y_test, y_proba, output_dir / "roc_curve.png", metrics.get("auc_test", 0.0)
+    )
     ShapInterpreter.explain(pipeline, X_test, output_dir)
 
     return metrics
+
+
 if __name__ == "__main__":
     # Ejemplo de ejecución directa para validación local / demo:
     from pathlib import Path
+
     metrics = evaluate_model(
         model_path=Path("models/model.pkl"),
         test_csv=Path("data/processed/test.csv"),

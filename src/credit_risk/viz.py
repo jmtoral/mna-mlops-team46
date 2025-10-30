@@ -1,5 +1,10 @@
 import matplotlib.pyplot as plt
-from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, RocCurveDisplay
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    PrecisionRecallDisplay,
+    RocCurveDisplay,
+)
+
 
 def log_confusion_matrix(mlflow, y_true, y_pred, name="confusion_matrix.png"):
     fig = plt.figure()
@@ -7,6 +12,7 @@ def log_confusion_matrix(mlflow, y_true, y_pred, name="confusion_matrix.png"):
     plt.title("Matriz de confusión")
     mlflow.log_figure(fig, name)
     plt.close(fig)
+
 
 def log_pr_roc(mlflow, y_true, y_proba):
     if y_proba is None:
