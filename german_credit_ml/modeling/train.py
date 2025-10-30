@@ -387,7 +387,13 @@ class Trainer:
         return model
 
     def run(self):
-        """Ejecuta todo el flujo de entrenamiento."""
+        """Ejecuta todo el flujo de entrenamiento.
+        Carga datos, divide, construye preprocesador,
+        evalúa desempeño preliminar con validación cruzada,
+        entrena el modelo final, evalúa en test,
+        genera artefactos (gráficas, SHAP),
+        y registra métricas y artefactos en MLflow y en disco para DVC.
+        """
         print_header()  # Imprime encabezado ASCII
         run_id = self.mlflog.start_run()  # Captura el Run ID
 
