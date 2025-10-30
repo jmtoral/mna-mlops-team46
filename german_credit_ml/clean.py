@@ -1,7 +1,5 @@
 # german_credit_ml/clean.py
-
 # python -m german_credit_ml.clean --input data/raw/german_credit_modified.csv --output data/processed/german_credit_clean.csv
-
 
 from __future__ import annotations
 
@@ -15,7 +13,6 @@ from scipy.stats.mstats import winsorize
 
 LOGGER = logging.getLogger(__name__)
 
-# --- Column Renaming and Type Definitions ---
 COLUMN_MAPPING = {
     'laufkont': 'status', 'laufzeit': 'duration', 'moral': 'credit_history',
     'verw': 'purpose', 'hoehe': 'amount', 'sparkont': 'savings',
@@ -40,99 +37,126 @@ CATEGORIES_MAP = {
 NUMERIC_COLS = ["duration", "amount", "age"]
 TARGET_COL = "credit_risk"
 
-# ----------------------------
-# Helper Functions
-# ----------------------------
 
 def load_yaml(path: Path | str) -> dict:
+    """Carga un archivo YAML y devuelve su contenido como diccionario."""
     path = Path(path)
     if not path.exists():
-        raise FileNotFoundError(f"Config file not found: {path}")
+        raise FileNotFoundError(f"No se encontró el archivo de configuración: {path}")
     with path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
-# ----------------------------
-# Core Cleaning Logic
-# ----------------------------
 
-def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """Applies the full cleaning pipeline to a single dataframe."""
-    
-    df = df.rename(columns=COLUMN_MAPPING)
+class DataCleaner:
+    """Clase para limpiar el dataset German Credit."""
 
-    if 'mixed_type_col' in df.columns:
-        df = df.drop(columns=['mixed_type_col'])
+    def __init__(self, df: pd.DataFrame):
+        self.df = df.copy()
 
-    LOGGER.info("Step 1: Forcing all columns to numeric type...")
-    for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-    
-    LOGGER.info("Step 2: Normalizing and filtering target variable 'credit_risk'...")
-    df[TARGET_COL] = df[TARGET_COL].replace({1.0: 1, 2.0: 0}).astype(float)
-    df = df[df[TARGET_COL].isin([0.0, 1.0])].copy()
+    def clean_dataframe(self) -> pd.DataFrame:
+        """Aplica todo el pipeline de limpieza."""
 
-    LOGGER.info("Step 3: Imputing missing values using the data's own median/mode...")
-    for col in df.columns:
-        if df[col].isnull().any():
-            if col in NUMERIC_COLS:
-                impute_value = df[col].median()
-                df[col] = df[col].fillna(impute_value)
-            elif col in CATEGORIES_MAP:
-                impute_value = df[col].mode()[0]
-                df[col] = df[col].fillna(impute_value)
-    
-    df = df.fillna(0)
+        LOGGER.info("Paso 1: Renombrando columnas y eliminando columnas innecesarias...")
+        self.rename_columns()
+        self.drop_mixed_columns()
 
-    LOGGER.info("Step 4: Applying Winsorization to numeric columns...")
-    for col in NUMERIC_COLS:
-        df[col] = winsorize(df[col], limits=[0.01, 0.01])
-        
-    LOGGER.info("Step 5: Enforcing final data types and categories...")
-    for col in NUMERIC_COLS:
-        df[col] = df[col].astype("int64")
-        
-    for col, valid_cats in CATEGORIES_MAP.items():
-        df[col] = df[col].clip(lower=min(valid_cats), upper=max(valid_cats))
-        df[col] = df[col].astype("category")
+        LOGGER.info("Paso 2: Normalizando y filtrando la variable objetivo 'credit_risk'...")
+        self.convert_numeric()
+        self.normalize_target()
 
-    df[TARGET_COL] = df[TARGET_COL].astype("int64")
-    other_int_cols = ['number_credits', 'people_liable']
-    for col in other_int_cols:
-         if col in df.columns:
-              df[col] = df[col].astype('int64')
+        LOGGER.info("Paso 3: Imputando valores faltantes usando la mediana/moda del dataset...")
+        self.impute_missing()
 
-    return df
+        LOGGER.info("Paso 4: Aplicando Winsorización a las columnas numéricas...")
+        self.winsorize_numeric()
 
-def final_validation(df: pd.DataFrame):
-    """Performs final checks on the cleaned dataframe."""
-    LOGGER.info("Performing final validation...")
-    assert df.isnull().sum().sum() == 0, "Validation failed: Null values still exist."
-    uniq_targets = set(df[TARGET_COL].unique())
-    assert uniq_targets.issubset({0, 1}), f"Validation failed: Target column contains non-binary values: {uniq_targets}"
-    LOGGER.info("Validation successful: No nulls and target is binary.")
+        LOGGER.info("Paso 5: Aplicando tipos de datos finales y categorías...")
+        self.enforce_types()
 
-# ----------------------------
-# Main Execution Block
-# ----------------------------
+        return self.df
+
+    def rename_columns(self):
+        self.df = self.df.rename(columns=COLUMN_MAPPING)
+
+    def drop_mixed_columns(self):
+        if 'mixed_type_col' in self.df.columns:
+            self.df = self.df.drop(columns=['mixed_type_col'])
+
+    def convert_numeric(self):
+        for col in self.df.columns:
+            self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
+
+    def normalize_target(self):
+        self.df[TARGET_COL] = self.df[TARGET_COL].replace({1.0: 1, 2.0: 0}).astype(float)
+        self.df = self.df[self.df[TARGET_COL].isin([0.0, 1.0])].copy()
+
+    def impute_missing(self):
+        for col in self.df.columns:
+            if self.df[col].isnull().any():
+                if col in NUMERIC_COLS:
+                    self.df[col] = self.df[col].fillna(self.df[col].median())
+                elif col in CATEGORIES_MAP:
+                    self.df[col] = self.df[col].fillna(self.df[col].mode()[0])
+        self.df = self.df.fillna(0)
+
+    def winsorize_numeric(self):
+        for col in NUMERIC_COLS:
+            self.df[col] = winsorize(self.df[col], limits=[0.01, 0.01])
+
+    def enforce_types(self):
+        for col in NUMERIC_COLS:
+            self.df[col] = self.df[col].astype("int64")
+
+        for col, valid_cats in CATEGORIES_MAP.items():
+            self.df[col] = self.df[col].clip(lower=min(valid_cats), upper=max(valid_cats))
+            self.df[col] = self.df[col].astype("category")
+
+        self.df[TARGET_COL] = self.df[TARGET_COL].astype("int64")
+
+        other_int_cols = ['number_credits', 'people_liable']
+        for col in other_int_cols:
+            if col in self.df.columns:
+                self.df[col] = self.df[col].astype('int64')
+
+    @staticmethod
+    def final_validation(df: pd.DataFrame):
+        """Realiza la validación final del DataFrame limpio."""
+        LOGGER.info("Realizando validación final del DataFrame...")
+        assert df.isnull().sum().sum() == 0, "Error: Aún existen valores nulos."
+        uniq_targets = set(df[TARGET_COL].unique())
+        assert uniq_targets.issubset({0, 1}), (
+            f"Error: La columna target contiene valores no binarios: {uniq_targets}"
+        )
+        LOGGER.info("Validación exitosa: No hay valores nulos y target es binario.")
+
+
 def run_clean(input_path: Path, output_path: Path):
-    LOGGER.info(f"Reading raw data from: {input_path}")
+    LOGGER.info(f"Leyendo datos originales desde: {input_path}")
     df = pd.read_csv(input_path)
-    
-    df_cleaned = clean_dataframe(df)
-    
-    final_validation(df_cleaned)
+
+    cleaner = DataCleaner(df)
+    df_cleaned = cleaner.clean_dataframe()
+    cleaner.final_validation(df_cleaned)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df_cleaned.to_csv(output_path, index=False)
-    LOGGER.info(f"Cleaned data saved to: {output_path} (Shape: {df_cleaned.shape})")
+    LOGGER.info(f"Datos limpios guardados en: {output_path} (Shape: {df_cleaned.shape})")
+
 
 def build_argparser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Cleaning script for the German Credit dataset.")
-    p.add_argument("--config", type=str, help="Path to the YAML configuration file (e.g., params.yaml).")
-    p.add_argument("--input", type=str, help="Path to the raw input CSV file (overrides config).")
-    p.add_argument("--output", type=str, help="Path to save the cleaned output CSV file (overrides config).")
-    p.add_argument("--log-level", type=str, default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Logging level.")
-    return p
+    parser = argparse.ArgumentParser(description="Script de limpieza para el dataset German Credit.")
+    parser.add_argument("--config", type=str, help="Ruta al archivo de configuración YAML (ej. params.yaml).")
+    parser.add_argument("--input", type=str, help="Ruta al CSV de entrada original (sobrescribe config).")
+    parser.add_argument("--output", type=str, help="Ruta para guardar el CSV limpio (sobrescribe config).")
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Nivel de logging."
+    )
+    return parser
+
 
 def main():
     args = build_argparser().parse_args()
@@ -149,9 +173,10 @@ def main():
         input_path = Path(args.input)
         output_path = Path(args.output)
     else:
-        raise SystemExit("Error: You must provide either --config or both --input and --output.")
+        raise SystemExit("Error: Debe proporcionar --config o ambos --input y --output.")
 
     run_clean(input_path, output_path)
+
 
 if __name__ == "__main__":
     main()
