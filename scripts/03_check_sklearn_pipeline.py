@@ -3,7 +3,7 @@
 """
 Validador de buenas prácticas del pipeline con Scikit-Learn.
 
-Revisa estáticamente (AST) en src/**/*.py:
+Revisa estáticamente (AST) en el código del proyecto:
 - Pipeline/ColumnTransformer presentes
 - Transformadores recomendados (SimpleImputer, StandardScaler, OneHotEncoder)
 - Entrenamiento/evaluación: train_test_split, métricas sklearn.metrics
@@ -26,11 +26,10 @@ import ast
 import glob
 import argparse
 from typing import List, Dict, Tuple, Optional
-
 import sys
 import io
 
-# Forzar stdout/stderr a UTF-8 en Windows para caracteres como ├─, └─, etc.
+# Forzar stdout/stderr a UTF-8 en Windows para caracteres especiales
 if sys.stdout.encoding is None or "cp125" in sys.stdout.encoding.lower():
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 if sys.stderr.encoding is None or "cp125" in sys.stderr.encoding.lower():
@@ -50,7 +49,7 @@ def parse_args():
     parser.add_argument(
         "--module-name",
         default=os.getenv("MODULE_NAME", "german_credit_ml"),
-        help="Nombre del paquete Python bajo src/ (solo para reporte descriptivo)",
+        help="Nombre del paquete Python principal (solo para reporte descriptivo)",
     )
     return parser.parse_args()
 
@@ -67,9 +66,11 @@ REQUIRED = "requerido"
 RECOMMENDED = "recomendado"
 OPTIONAL = "opcional"
 
+
 # -------- utilidades generales --------
 def pad_to_column(text: str, col: int) -> str:
     return text if len(text) >= col else text + " " * (col - len(text))
+
 
 def tag(present: bool, importance: str) -> str:
     if present:
@@ -80,9 +81,11 @@ def tag(present: bool, importance: str) -> str:
         return "[FALTA-RECOMENDADO]"
     return "[FALTA-OPCIONAL]"
 
+
 def print_header(title: str):
     print("\n" + title)
     print("-" * len(title))
+
 
 # -------- helpers de AST --------
 def load_ast(py_file: str) -> Optional[ast.AST]:
@@ -92,17 +95,23 @@ def load_ast(py_file: str) -> Optional[ast.AST]:
     except Exception:
         return None
 
+
 def list_functions(tree: ast.AST) -> List[ast.FunctionDef]:
     return [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+
 
 def list_calls(tree: ast.AST) -> List[ast.Call]:
     return [n for n in ast.walk(tree) if isinstance(n, ast.Call)]
 
+
 def dotted_name(node: ast.AST) -> str:
     """
-    Devuelve un nombre punto.separado de un nodo de acceso, por ejemplo:
-    sklearn.pipeline.Pipeline
-    mlflow.sklearn.log_model
+    Devuelve el nombre "accesible" de la llamada:
+    - sklearn.pipeline.Pipeline
+    - pipeline.Pipeline
+    - OneHotEncoder
+    - mlflow.sklearn.log_model
+    etc.
     """
     if isinstance(node, ast.Name):
         return node.id
@@ -110,11 +119,14 @@ def dotted_name(node: ast.AST) -> str:
         return f"{dotted_name(node.value)}.{node.attr}"
     return ""
 
+
 def call_name(call: ast.Call) -> str:
     return dotted_name(call.func)
 
+
 def kwarg_present(call: ast.Call, kw: str) -> bool:
     return any((isinstance(a, ast.keyword) and a.arg == kw) for a in call.keywords)
+
 
 # -------- análisis por archivo --------
 def scan_file(py_file: str) -> Dict[str, bool]:
@@ -181,36 +193,51 @@ def scan_file(py_file: str) -> Dict[str, bool]:
            name.endswith("make_column_transformer"):
             flags["column_transformer"] = True
 
-        # Transformadores típicos
-        if name.endswith("sklearn.impute.SimpleImputer") or \
-           name.endswith("impute.SimpleImputer"):
+        # --- Transformadores típicos (mejorado) ---
+        # SimpleImputer
+        if (
+            name.endswith("sklearn.impute.SimpleImputer")
+            or name.endswith("impute.SimpleImputer")
+            or name.endswith("SimpleImputer")
+        ):
             flags["has_simple_imputer"] = True
 
-        if name.endswith("sklearn.preprocessing.StandardScaler") or \
-           name.endswith("preprocessing.StandardScaler"):
+        # StandardScaler
+        if (
+            name.endswith("sklearn.preprocessing.StandardScaler")
+            or name.endswith("preprocessing.StandardScaler")
+            or name.endswith("StandardScaler")
+        ):
             flags["has_standard_scaler"] = True
 
-        if name.endswith("sklearn.preprocessing.OneHotEncoder") or \
-           name.endswith("preprocessing.OneHotEncoder"):
+        # OneHotEncoder
+        if (
+            name.endswith("sklearn.preprocessing.OneHotEncoder")
+            or name.endswith("preprocessing.OneHotEncoder")
+            or name.endswith("OneHotEncoder")
+        ):
             flags["has_onehot"] = True
 
         # train_test_split
-        if name.endswith("sklearn.model_selection.train_test_split") or \
-           name.endswith("model_selection.train_test_split") or \
-           name.endswith("train_test_split"):
+        if (
+            name.endswith("sklearn.model_selection.train_test_split")
+            or name.endswith("model_selection.train_test_split")
+            or name.endswith("train_test_split")
+        ):
             flags["tts"] = True
             if kwarg_present(c, "random_state"):
                 flags["random_state"] = True
 
         # cross_val_score
-        if name.endswith("sklearn.model_selection.cross_val_score") or \
-           name.endswith("model_selection.cross_val_score") or \
-           name.endswith("cross_val_score"):
+        if (
+            name.endswith("sklearn.model_selection.cross_val_score")
+            or name.endswith("model_selection.cross_val_score")
+            or name.endswith("cross_val_score")
+        ):
             flags["cv"] = True
 
         # GridSearchCV / RandomizedSearchCV
-        if name.endswith("GridSearchCV") or \
-           name.endswith("RandomizedSearchCV"):
+        if name.endswith("GridSearchCV") or name.endswith("RandomizedSearchCV"):
             flags["searchcv"] = True
             if kwarg_present(c, "random_state"):
                 flags["random_state"] = True
@@ -224,14 +251,18 @@ def scan_file(py_file: str) -> Dict[str, bool]:
             flags["random_state"] = True
 
         # Persistencia de modelo
-        if name.endswith("joblib.dump") or \
-           name.endswith("sklearn.externals.joblib.dump") or \
-           name.endswith("pickle.dump"):
+        if (
+            name.endswith("joblib.dump")
+            or name.endswith("sklearn.externals.joblib.dump")
+            or name.endswith("pickle.dump")
+        ):
             flags["persist"] = True
 
         # MLflow tracking/model registry
-        if name.endswith("mlflow.autolog") or \
-           name.endswith("mlflow.sklearn.log_model"):
+        if (
+            name.endswith("mlflow.autolog")
+            or name.endswith("mlflow.sklearn.log_model")
+        ):
             flags["mlflow"] = True
 
         # Lectura de params.yaml
@@ -245,12 +276,24 @@ def scan_file(py_file: str) -> Dict[str, bool]:
     flags["metrics"] = len(metric_names) > 0
     return flags
 
+
 def scan_repo() -> Dict[str, Dict[str, bool]]:
-    files = sorted(glob.glob("src/**/*.py", recursive=True))
+    """
+    Escanea código en ambos estilos:
+    - estilo Cookiecutter DS v1: src/**.py
+    - estilo Cookiecutter DS v2: <module_name>/**.py
+    - scripts sueltos en raíz (*.py)
+    """
+    files = []
+    files.extend(glob.glob("src/**/*.py", recursive=True))
+    files.extend(glob.glob(f"{MODULE_NAME}/**/*.py", recursive=True))
+    files.extend(glob.glob("*.py", recursive=False))
+
     results: Dict[str, Dict[str, bool]] = {}
-    for f in files:
+    for f in sorted(set(files)):
         results[f] = scan_file(f)
     return results
+
 
 # -------- agregación --------
 def aggregate(results: Dict[str, Dict[str, bool]]) -> Dict[str, float]:
@@ -261,7 +304,7 @@ def aggregate(results: Dict[str, Dict[str, bool]]) -> Dict[str, float]:
     doc_weighted_sum = 0.0
     n_funcs_total = 0
 
-    for f, flags in results.items():
+    for _, flags in results.items():
         for k in agg:
             agg[k] = agg[k] or bool(flags.get(k, False))
         if flags.get("n_funcs", 0) > 0:
@@ -271,6 +314,7 @@ def aggregate(results: Dict[str, Dict[str, bool]]) -> Dict[str, float]:
     agg["doc_ratio"] = (doc_weighted_sum / n_funcs_total) if n_funcs_total else 0.0
     agg["n_funcs"] = n_funcs_total
     return agg
+
 
 # -------- reporte --------
 def main():
@@ -343,7 +387,7 @@ def main():
     if not agg["has_standard_scaler"]:
         print(" - Añade StandardScaler para variables numéricas (si aplica).")
     if not agg["has_onehot"]:
-        print(" - Añade OneHotEncoder(handle_unknown='ignore') para categóricas.")
+        print(" - Añade OneHotEncoder(handle_unknown='ignore', sparse_output=False) para categóricas.")
     if not agg["tts"]:
         print(" - Separa entrenamiento/prueba con train_test_split (estratifica si es clasificación).")
     if not agg["metrics"]:
@@ -360,6 +404,7 @@ def main():
         print(" - Centraliza hiperparámetros/rutas en params.yaml y cárgalos con yaml.safe_load.")
     if not doc_ok:
         print(" - Añade docstrings a funciones que construyen el pipeline/entrenan/evalúan.")
+
 
 if __name__ == "__main__":
     main()
