@@ -384,3 +384,15 @@ if __name__ == "__main__":
     # Crear e iniciar el entrenador
     trainer = Trainer(paths, cfg)
     trainer.run()
+
+def train_model(input_data, model_output, metrics_output, plots_output):
+    """Entrena el pipeline completo y registra resultados."""
+    paths = Paths(
+        input_data=input_data,
+        model_output=model_output,
+        metrics_output=metrics_output,
+        plots_output=plots_output,
+    )
+    cfg = TrainConfig(test_size=0.2, random_state=42)
+    trainer = Trainer(paths, cfg)
+    trainer.run()

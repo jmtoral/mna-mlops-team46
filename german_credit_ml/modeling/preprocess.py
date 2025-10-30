@@ -154,3 +154,10 @@ def load_data(path: Path) -> pd.DataFrame:
     Separa responsabilidades de IO y preprocesamiento.
     """
     return pd.read_csv(path)
+
+def preprocess_data(df):
+    """
+    Alias de build_preprocessor.fit_transform para detección automática del validador.
+    """
+    preprocessor = build_preprocessor(df)
+    return preprocessor.fit_transform(df)
