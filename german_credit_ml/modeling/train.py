@@ -25,6 +25,8 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_curve, 
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import Pipeline
+from german_credit_ml.modeling.preprocess import build_preprocessor
 
 # --- Importaciones de Rich y utilidades ---
 from german_credit_ml.utils import console, print_header # Importar consola y header
@@ -359,6 +361,16 @@ class Trainer:
         self.mlflog.end_run()
 
         console.print("\n[bold bright_green][SUCCESS][/bold bright_green] Entrenamiento finalizado exitosamente.")
+    def build_model(self, X_train):
+        """Crea pipeline reproducible: preprocesamiento + modelo."""
+        preprocessor = build_preprocessor(X_train)
+        model = self._init_model()  # o el clasificador que ya usas
+
+        pipeline = Pipeline([
+            ("preprocess", preprocessor),
+            ("model", model)
+        ])
+        return pipeline
 
 
 # --- Bloque de ejecución principal ---
