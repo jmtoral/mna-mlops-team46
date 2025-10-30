@@ -2,7 +2,7 @@
   VALIDACIÓN COMPLETA DEL PROYECTO MLOps
   Raíz del proyecto : C:/dev/mna-mlops-team46
   Módulo Python      : german_credit_ml
-  Fecha de ejecución : Thu, Oct 30, 2025 10:33:28 AM
+  Fecha de ejecución : Thu, Oct 30, 2025 12:44:18 PM
 ==============================================================
 
 --------------------------------------------------------------
@@ -50,15 +50,15 @@ Ejecutando 02_check_refactor.py ...
 2) Refactorización y modularización del código — Chequeo estático
 -----------------------------------------------------------------
 german_credit_ml/ (visión lógica de pipeline ML)
-├─ preprocess.py                                  [FALTA-REQUERIDO]
+├─ preprocess.py                                  [PRESENTE]
 ├─ train.py (incluye modeling/train.py)           [PRESENTE]
-└─ evaluate.py (incluye modeling/evaluate.py)     [FALTA-REQUERIDO]
+└─ evaluate.py (incluye modeling/evaluate.py)     [PRESENTE]
 
 Funciones por responsabilidad (mínimos por módulo)
 --------------------------------------------------
-preprocess.py                 [FALTA-REQUERIDO]   No encontrado.
+preprocess.py                 [FALTA-REQUERIDO]   german_credit_ml\modeling\preprocess.py -> No se detectó función que cumpla prefijos esperados: ['load_', 'read_', 'ingest_', 'get_']
 train.py                      [FALTA-REQUERIDO]   german_credit_ml\modeling\train.py -> No se detectó función que cumpla prefijos esperados: ['train', 'fit']
-evaluate.py                   [FALTA-REQUERIDO]   No encontrado.
+evaluate.py                   [PRESENTE]   german_credit_ml\modeling\evaluate.py -> OK
 
 POO sugerida (clases reutilizables)
 -----------------------------------
@@ -66,12 +66,12 @@ Clases sugeridas              [FALTA-RECOMENDADO]   No se detectaron ['ModelTrai
 
 Pruebas unitarias básicas (pytest)
 ----------------------------------
-tests/test_*.py               [PRESENTE]   tests\test_data.py
+tests/test_*.py               [PRESENTE]   tests\test_data.py, tests\test_preprocess.py
 
 Buenas prácticas (docstrings, type hints, main guard)
 -----------------------------------------------------
-Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.24 (59 funcs)
-Type hints funciones (>=30%)  [PRESENTE]   ratio=0.59
+Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.27 (62 funcs)
+Type hints funciones (>=30%)  [PRESENTE]   ratio=0.61
 __main__ en scripts           [PRESENTE]   OK
 
 Leyenda de estados:
@@ -81,8 +81,6 @@ Leyenda de estados:
   [FALTA-OPCIONAL]     Depende del contexto del proyecto
 
 Sugerencias:
- - Crea german_credit_ml/preprocess.py (carga/limpieza/features).
- - Crea german_credit_ml/modeling/evaluate.py (evaluación y reporte de métricas).
  - Añade docstrings breves a funciones públicas (qué hace, entradas, salidas).
 
 --------------------------------------------------------------
@@ -103,7 +101,7 @@ Tuning: GridSearchCV/RandomizedSearchCV                               [PRESENTE]
 Reproducibilidad: uso de random_state                                 [PRESENTE]
 Persistencia/registro del modelo (joblib o MLflow)                    [PRESENTE]
 Lectura de configuración (params.yaml)                                [PRESENTE]
-Docstrings en funciones de pipeline (>=50%)                           [FALTA-RECOMENDADO]   ratio=0.23 (sobre 64 funciones)
+Docstrings en funciones de pipeline (>=50%)                           [FALTA-RECOMENDADO]   ratio=0.27 (sobre 67 funciones)
 
 Leyenda de estados:
   [PRESENTE]           Regla satisfecha

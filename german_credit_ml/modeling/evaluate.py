@@ -26,3 +26,13 @@ def evaluate_model(model_path: Path, test_csv: Path, target_col: str, output_dir
     ShapInterpreter.explain(pipeline, X_test, output_dir)
 
     return metrics
+if __name__ == "__main__":
+    # Ejemplo de ejecución directa para validación local / demo:
+    from pathlib import Path
+    metrics = evaluate_model(
+        model_path=Path("models/model.pkl"),
+        test_csv=Path("data/processed/test.csv"),
+        target_col="credit_risk",
+        output_dir=Path("reports/eval_artifacts"),
+    )
+    print("[INFO] Métricas de evaluación:", metrics)
