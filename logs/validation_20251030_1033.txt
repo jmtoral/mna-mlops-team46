@@ -2,7 +2,7 @@
   VALIDACIÓN COMPLETA DEL PROYECTO MLOps
   Raíz del proyecto : C:/dev/mna-mlops-team46
   Módulo Python      : german_credit_ml
-  Fecha de ejecución : Wed, Oct 29, 2025  8:50:50 PM
+  Fecha de ejecución : Thu, Oct 30, 2025 10:33:28 AM
 ==============================================================
 
 --------------------------------------------------------------
@@ -23,13 +23,13 @@ mna-mlops-team46/
    │  ├─ interim/                       (steps intermedios)           [PRESENTE]
    │  └─ processed/                     (dataset limpio para modeling)[PRESENTE]
    ├─ models/                           (artefactos entrenados)       [PRESENTE]
-   ├─ notebooks/                        (numerados: 0x-... con autor y propósito)[PRESENTE]
+   ├─ notebooks/                        (numerados: 0x-autor-propósito)[PRESENTE]
    ├─ reports/                          (figuras, tablas)             [PRESENTE]
    ├─ german_credit_ml/                 (paquete Python principal del proyecto)[PRESENTE]
    │  ├─ __init__.py                                                  [PRESENTE]
    │  ├─ data/                          (IO de datos)                 [FALTA-RECOMENDADO]
    │  ├─ features/                      (featurización)               [FALTA-RECOMENDADO]
-   │  ├─ models/                        (train, predict, evaluate)    [FALTA-RECOMENDADO]
+   │  ├─ models/ (o modeling/)          (train, predict, evaluate)    [PRESENTE]
    │  └─ utils/                         (helpers/utilidades compartidas)[FALTA-RECOMENDADO]
    ├─ tests/                            (pytest)                      [PRESENTE]
    ├─ dvc.yaml                          (si usas DVC)                 [PRESENTE]
@@ -49,15 +49,15 @@ Ejecutando 02_check_refactor.py ...
 
 2) Refactorización y modularización del código — Chequeo estático
 -----------------------------------------------------------------
-src/german_credit_ml/ (visión lógica)
-├─ preprocess.py                             [FALTA-REQUERIDO]
-├─ train.py                                  [FALTA-REQUERIDO]
-└─ evaluate.py                               [FALTA-REQUERIDO]
+german_credit_ml/ (visión lógica de pipeline ML)
+├─ preprocess.py                                  [FALTA-REQUERIDO]
+├─ train.py (incluye modeling/train.py)           [PRESENTE]
+└─ evaluate.py (incluye modeling/evaluate.py)     [FALTA-REQUERIDO]
 
 Funciones por responsabilidad (mínimos por módulo)
 --------------------------------------------------
 preprocess.py                 [FALTA-REQUERIDO]   No encontrado.
-train.py                      [FALTA-REQUERIDO]   No encontrado.
+train.py                      [FALTA-REQUERIDO]   german_credit_ml\modeling\train.py -> No se detectó función que cumpla prefijos esperados: ['train', 'fit']
 evaluate.py                   [FALTA-REQUERIDO]   No encontrado.
 
 POO sugerida (clases reutilizables)
@@ -70,8 +70,8 @@ tests/test_*.py               [PRESENTE]   tests\test_data.py
 
 Buenas prácticas (docstrings, type hints, main guard)
 -----------------------------------------------------
-Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.00 (14 funcs)
-Type hints funciones (>=30%)  [PRESENTE]   ratio=0.50
+Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.24 (59 funcs)
+Type hints funciones (>=30%)  [PRESENTE]   ratio=0.59
 __main__ en scripts           [PRESENTE]   OK
 
 Leyenda de estados:
@@ -81,9 +81,8 @@ Leyenda de estados:
   [FALTA-OPCIONAL]     Depende del contexto del proyecto
 
 Sugerencias:
- - Crea src/german_credit_ml/preprocess.py (carga/limpieza/features básicas).
- - Crea src/german_credit_ml/train.py (entrenamiento; registra métricas/artefactos).
- - Crea src/german_credit_ml/evaluate.py (evaluación; reporte de métricas).
+ - Crea german_credit_ml/preprocess.py (carga/limpieza/features).
+ - Crea german_credit_ml/modeling/evaluate.py (evaluación y reporte de métricas).
  - Añade docstrings breves a funciones públicas (qué hace, entradas, salidas).
 
 --------------------------------------------------------------
@@ -94,17 +93,17 @@ Ejecutando 03_check_sklearn_pipeline.py ...
 -----------------------------------------------------------------------------------------------------------------------------
 Pipeline (sklearn.pipeline.Pipeline/make_pipeline)                    [FALTA-REQUERIDO]
 Preprocesamiento con ColumnTransformer                                [FALTA-REQUERIDO]
-Transformadores: SimpleImputer                                        [FALTA-REQUERIDO]
-Transformadores: StandardScaler                                       [FALTA-REQUERIDO]
-Transformadores: OneHotEncoder                                        [FALTA-REQUERIDO]
+Transformadores: SimpleImputer                                        [PRESENTE]
+Transformadores: StandardScaler                                       [PRESENTE]
+Transformadores: OneHotEncoder                                        [PRESENTE]
 train_test_split                                                      [PRESENTE]
-Métricas de sklearn.metrics (evaluación)                              [FALTA-REQUERIDO]
+Métricas de sklearn.metrics (evaluación)                              [PRESENTE]
 Validación: cross_val_score                                           [FALTA-RECOMENDADO]
 Tuning: GridSearchCV/RandomizedSearchCV                               [PRESENTE]
 Reproducibilidad: uso de random_state                                 [PRESENTE]
 Persistencia/registro del modelo (joblib o MLflow)                    [PRESENTE]
 Lectura de configuración (params.yaml)                                [PRESENTE]
-Docstrings en funciones de pipeline (>=50%)                           [FALTA-RECOMENDADO]   ratio=0.00 (sobre 14 funciones)
+Docstrings en funciones de pipeline (>=50%)                           [FALTA-RECOMENDADO]   ratio=0.23 (sobre 64 funciones)
 
 Leyenda de estados:
   [PRESENTE]           Regla satisfecha
@@ -115,10 +114,6 @@ Leyenda de estados:
 Sugerencias:
  - Crea un sklearn.pipeline.Pipeline o make_pipeline que encadene preprocesamiento + modelo.
  - Usa sklearn.compose.ColumnTransformer para separar numéricas/categóricas.
- - Añade SimpleImputer para completar faltantes (num y/o cat).
- - Añade StandardScaler para variables numéricas (si aplica).
- - Añade OneHotEncoder(handle_unknown='ignore') para categóricas.
- - Calcula y registra métricas (accuracy/precision/recall/F1/ROC-AUC según el caso).
  - Añade cross_val_score para estimar desempeño promedio/varianza.
  - Añade docstrings a funciones que construyen el pipeline/entrenan/evalúan.
 
@@ -140,7 +135,7 @@ Runs con métricas (metrics/)                                      [PRESENTE]
 Runs con artifacts (artifacts/)                                   [PRESENTE]
 Artifacts de modelo MLflow (artifacts/model/MLmodel)              [FALTA-RECOMENDADO]
 Artifacts de visualización (png/html/pdf) en mlruns/              [PRESENTE]
-Modelos versionados en models/ (*.joblib|*.pkl|*.onnx|*.pt…)      [PRESENTE]
+Artefactos de modelo versionados (carpeta models/ o MLflow)       [PRESENTE]
 DVC: dvc.yaml (pipeline/datos versionados)                        [PRESENTE]
 DVC: dvc.lock (congelado de pipeline/datos)                       [PRESENTE]
 DVC: .dvc/config (remotos configurados)                           [PRESENTE]

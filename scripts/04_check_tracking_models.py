@@ -4,21 +4,11 @@
 Validador de:
 4) Seguimiento de Experimentos, Visualización de Resultados y Gestión de Modelos
 
-Revisa estáticamente:
-- Uso de MLflow en código (tracking/params/metrics/artifacts/autolog/registry)
-- Evidencia de ejecuciones en mlruns/ (experimentos, runs, params, metrics, artifacts)
-- Gestión de modelos (modelos guardados, MLflow artifacts de modelo)
-- DVC: dvc.yaml, dvc.lock, .dvc/config (remoto S3 u otro), archivos .dvc (datos versionados)
-- Visualizaciones: artifacts (png/html/pdf) en mlruns/**/artifacts
-- Documentación: README con secciones de reproducción/experimentos (heurística simple)
-
-Estados:
-  [PRESENTE], [FALTA-REQUERIDO], [FALTA-RECOMENDADO], [FALTA-OPCIONAL]
-
-Uso:
-  python 04_check_tracking_models.py ^
-    --project-root "C:\\dev\\mna-mlops-team46" ^
-    --module-name german_credit_ml
+Ajustes:
+- "Artefactos de modelo versionados" se considera satisfecho si:
+  a) existen archivos serializados en ./models/, O
+  b) existe al menos un run en MLflow con artifacts/model/MLmodel.
+- Escaneo de código soporta tanto src/** como <module_name>/**.
 """
 
 import os
@@ -27,18 +17,16 @@ import glob
 import yaml
 import argparse
 from typing import Dict, List, Tuple, Optional
-
 import sys
 import io
 
-# Forzar stdout/stderr a UTF-8 en Windows para caracteres como ├─, └─, etc.
+# Forzar UTF-8 en Windows
 if sys.stdout.encoding is None or "cp125" in sys.stdout.encoding.lower():
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 if sys.stderr.encoding is None or "cp125" in sys.stderr.encoding.lower():
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
-    
 
-# -------------------- CLI / ENV --------------------
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Validador de tracking de experimentos, versionado y registro de modelos (MLflow / DVC)"
@@ -68,6 +56,7 @@ REQUIRED = "requerido"
 RECOMMENDED = "recomendado"
 OPTIONAL = "opcional"
 
+
 def tag(present: bool, importance: str) -> str:
     if present:
         return "[PRESENTE]"
@@ -77,46 +66,34 @@ def tag(present: bool, importance: str) -> str:
         return "[FALTA-RECOMENDADO]"
     return "[FALTA-OPCIONAL]"
 
+
 def pad(text: str, col: int) -> str:
     return text if len(text) >= col else text + " " * (col - len(text))
+
 
 def print_header(title: str):
     print("\n" + title)
     print("-" * len(title))
 
-# ---------- Escaneos de filesystem / código ----------
 
 def candidate_code_paths(module_name: str) -> List[str]:
-    """
-    Para soportar ambas convenciones:
-    - Cookiecutter Data Science v1: src/**.py
-    - Cookiecutter Data Science v2: <module_name>/**.py en raíz
-    """
     patterns = []
-    # v1 estilo src
     patterns.append("src/**/*.py")
-    # v2 estilo paquete en raíz
     patterns.append(f"{module_name}/**/*.py")
-    # carpeta raíz por si hay scripts sueltos a nivel repo
     patterns.append("*.py")
     return patterns
 
+
 def grep_code(patterns_regex: List[str], module_name: str) -> set:
-    """
-    Busca patrones (regex) en .py dentro de las rutas candidatas y en notebooks .ipynb.
-    """
     found = set()
 
-    # Archivos Python
     py_files = []
     for pat in candidate_code_paths(module_name):
         py_files.extend(glob.glob(pat, recursive=True))
     py_files = sorted(set(py_files))
 
-    # Notebooks
     nb_files = sorted(glob.glob("notebooks/**/*.ipynb", recursive=True))
 
-    # Escanear .py
     for f in py_files:
         try:
             with open(f, "r", encoding="utf-8") as fh:
@@ -127,7 +104,6 @@ def grep_code(patterns_regex: List[str], module_name: str) -> set:
         except Exception:
             pass
 
-    # Escanear .ipynb (heurística simple texto)
     for f in nb_files:
         try:
             with open(f, "r", encoding="utf-8") as fh:
@@ -140,8 +116,10 @@ def grep_code(patterns_regex: List[str], module_name: str) -> set:
 
     return found
 
+
 def has_path(p: str) -> bool:
     return os.path.exists(p)
+
 
 def read_file_text(path: str) -> str:
     try:
@@ -150,6 +128,7 @@ def read_file_text(path: str) -> str:
     except Exception:
         return ""
 
+
 def dvc_config_info() -> Tuple[Optional[str], List[str], List[str]]:
     cfg_path = os.path.join(".dvc", "config")
     txt = read_file_text(cfg_path)
@@ -157,14 +136,8 @@ def dvc_config_info() -> Tuple[Optional[str], List[str], List[str]]:
     urls = re.findall(r'url\s*=\s*(.+)', txt or "")
     return (cfg_path if txt else None, remotes, urls)
 
+
 def find_mlruns_dir() -> Optional[str]:
-    """
-    Detecta carpeta mlruns.
-    Orden:
-    1. Variable de entorno MLRUNS_DIR
-    2. ./mlruns en raíz del repo
-    3. búsqueda recursiva (evitando dirs comunes basura)
-    """
     env_dir = os.getenv("MLRUNS_DIR")
     if env_dir and os.path.isdir(env_dir):
         return os.path.normpath(env_dir)
@@ -180,18 +153,8 @@ def find_mlruns_dir() -> Optional[str]:
 
     return None
 
+
 def scan_mlruns() -> Dict[str, int]:
-    """
-    Devuelve conteos y banderas básicas de mlruns local (si existe):
-    - exists
-    - n_experiments
-    - n_runs
-    - runs_with_params
-    - runs_with_metrics
-    - runs_with_artifacts
-    - runs_with_model_artifact
-    - runs_with_visuals
-    """
     base = find_mlruns_dir()
     info = {
         "exists": bool(base),
@@ -206,7 +169,6 @@ def scan_mlruns() -> Dict[str, int]:
     if not base:
         return info
 
-    # Experimentos: subdirectorios (evita "models" y ".trash")
     exps = [
         d for d in glob.glob(os.path.join(base, "*"))
         if os.path.isdir(d) and os.path.basename(d) not in {"models", ".trash"}
@@ -228,11 +190,9 @@ def scan_mlruns() -> Dict[str, int]:
             if os.path.isdir(adir) and glob.glob(os.path.join(adir, "**/*"), recursive=True):
                 info["runs_with_artifacts"] += 1
 
-            # modelo MLflow
             if os.path.isfile(os.path.join(adir, "model", "MLmodel")):
                 info["runs_with_model_artifact"] += 1
 
-            # visualizaciones comunes
             visuals = []
             for ext in ("*.png", "*.html", "*.pdf"):
                 visuals.extend(glob.glob(os.path.join(adir, "**", ext), recursive=True))
@@ -241,20 +201,20 @@ def scan_mlruns() -> Dict[str, int]:
 
     return info
 
+
 def scan_models_dir() -> List[str]:
-    """Busca artefactos de modelo fuera de MLflow (models/*.joblib|.pkl|.onnx|.pt...)."""
     found: List[str] = []
     for ext in ("*.joblib", "*.pkl", "*.pickle", "*.onnx", "*.pt", "*.pytorch", "*.pb", "*.h5"):
         found.extend(glob.glob(os.path.join("models", "**", ext), recursive=True))
     return sorted(set(found))
 
+
 def scan_dvc_files() -> Tuple[List[str], bool]:
-    """Busca archivos .dvc (seguimiento de datasets individuales) y dvc.lock."""
     dvc_files = sorted(glob.glob("**/*.dvc", recursive=True))
     return dvc_files, has_path("dvc.lock")
 
+
 def read_params_yaml_keys() -> List[str]:
-    """Lee params.yaml y devuelve claves top-level (si existe y es YAML válido)."""
     if not has_path("params.yaml"):
         return []
     try:
@@ -266,8 +226,8 @@ def read_params_yaml_keys() -> List[str]:
     except Exception:
         return []
 
+
 def readme_has_sections() -> Dict[str, bool]:
-    """Heurística mínima para detectar secciones útiles en README."""
     txt = read_file_text("README.md").lower()
     return {
         "repro": any(k in txt for k in ["reproduc", "reproducible", "cómo ejecutar", "make ", "pipeline"]),
@@ -276,13 +236,14 @@ def readme_has_sections() -> Dict[str, bool]:
         "experiments": any(k in txt for k in ["experimento", "experimentos", "runs", "mlruns"]),
     }
 
+
 def main():
     print_header(
         f"4) Seguimiento de Experimentos, Visualización y Gestión de Modelos — Chequeo estático "
         f"(módulo {MODULE_NAME}, raíz {ROOT})"
     )
 
-    # ---------- MLflow en código ----------
+    # MLflow en código
     mlflow_patterns = [
         r"\bmlflow\.set_tracking_uri\b",
         r"\bmlflow\.set_experiment\b",
@@ -333,7 +294,7 @@ def main():
               r"\bcreate_registered_model\b"
           ]), RECOMMENDED))
 
-    # ---------- mlruns (filesystem local) ----------
+    # mlruns en disco
     info = scan_mlruns()
     print(pad("mlruns/ presente (tracking local)", 65), tag(info["exists"], OPTIONAL))
     print(pad("Experimentos en mlruns/ (>=1)", 65), tag(info["n_experiments"] > 0, RECOMMENDED))
@@ -346,12 +307,13 @@ def main():
     print(pad("Artifacts de visualización (png/html/pdf) en mlruns/", 65),
           tag(info["runs_with_visuals"] > 0, RECOMMENDED))
 
-    # ---------- Gestión de modelos fuera de MLflow ----------
+    # Gestión de modelos
     saved_models = scan_models_dir()
-    print(pad("Modelos versionados en models/ (*.joblib|*.pkl|*.onnx|*.pt…)", 65),
-          tag(len(saved_models) > 0, RECOMMENDED))
+    model_versioning_ok = (len(saved_models) > 0) or (info["runs_with_model_artifact"] > 0)
+    print(pad("Artefactos de modelo versionados (carpeta models/ o MLflow)", 65),
+          tag(model_versioning_ok, RECOMMENDED))
 
-    # ---------- DVC ----------
+    # DVC
     dvc_yaml = has_path("dvc.yaml")
     dvc_lock = has_path("dvc.lock")
     dvc_cfg_path, remotes, urls = dvc_config_info()
@@ -369,7 +331,7 @@ def main():
     print(pad("DVC: archivos .dvc (datos bajo control de DVC)", 65),
           tag(len(dvc_files) > 0, RECOMMENDED))
 
-    # ---------- Documentación / params ----------
+    # Documentación / params
     params_keys = read_params_yaml_keys()
     print(pad("params.yaml con claves (hiperparámetros/config)", 65),
           tag(len(params_keys) > 0, RECOMMENDED))
@@ -382,14 +344,12 @@ def main():
     print(pad("README: sección sobre DVC/datos", 65),
           tag(r["dvc"], RECOMMENDED))
 
-    # ---------- Leyenda ----------
     print("\nLeyenda de estados:")
     print("  [PRESENTE]           Regla satisfecha")
     print("  [FALTA-REQUERIDO]    Debe corregirse para cumplir seguimiento/versionado mínimo")
     print("  [FALTA-RECOMENDADO]  Muy aconsejable para comparación/visualización/registro")
     print("  [FALTA-OPCIONAL]     Depende del contexto (por ejemplo tracking remoto sin mlruns local)")
 
-    # ---------- Sugerencias accionables ----------
     print("\nSugerencias:")
     if not any(k in mlflow_hits for k in [
         r"\bmlflow\.set_experiment\b",
@@ -397,40 +357,31 @@ def main():
         r"\bmlflow\.autolog\b"
     ]):
         print(" - Inicia y nombra experimentos en MLflow (set_experiment/start_run/autolog).")
-
     if not any(k in mlflow_hits for k in [
         r"\bmlflow\.log_param\b",
         r"\bmlflow\.log_metric\b"
     ]):
         print(" - Registra parámetros y métricas clave por run (mlflow.log_params / log_metrics).")
-
     if info["exists"] and info["n_runs"] < 2:
         print(" - Genera al menos 2 corridas comparables para justificar selección de modelo en la entrega.")
-
     if info["exists"] and info["runs_with_visuals"] == 0:
         print(" - Registra curvas ROC/PR, matriz de confusión, etc. como artifacts (png/html) en MLflow.")
-
     if not (dvc_yaml and (dvc_lock or has_lock)):
         print(" - Define/actualiza pipeline en dvc.yaml y congélalo con dvc.lock (dvc repro; dvc commit).")
-
     if not remotes:
         print(" - Configura un remoto DVC (ej. S3) y empuja datos/modelos con dvc push.")
-
     if remotes and not has_s3:
         print(" - Considera remoto S3 para alinear con la infraestructura del equipo (eu-north-1).")
-
-    if len(saved_models) == 0 and info["runs_with_model_artifact"] == 0:
+    if not model_versioning_ok:
         print(" - Versiona modelos: guarda en models/*.joblib o como artifacts de MLflow (log_model / register_model).")
-
     if dvc_yaml and len(dvc_files) == 0:
         print(" - Versiona datasets grandes con .dvc (dvc add data/raw/...; dvc push).")
-
     if len(params_keys) == 0:
         print(" - Centraliza hiperparámetros y rutas en params.yaml y cárgalos desde el código.")
-
     if not (r["repro"] and (r["mlflow"] or r["experiments"]) and r["dvc"]):
         print(" - Documenta en README: cómo reproducir (Makefile), cómo ver resultados en MLflow, "
               "y cómo restaurar datos/modelos con DVC.")
+
 
 if __name__ == "__main__":
     main()
