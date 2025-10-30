@@ -195,22 +195,3 @@ cython_debug/
 
 # Ignorar la carpeta de experimentos de MLflow
 mlruns/
-
-#OOP
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-.env
-.ipynb_checkpoints/
-
-# MLflow local
-mlruns/
-
-# DVC
-.dvc/
-*.lock
-
-# Artifacts
-artifacts/

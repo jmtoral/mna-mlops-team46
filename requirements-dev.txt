@@ -143,8 +143,6 @@ mistune==3.1.4
 mkdocs==1.6.1
 mkdocs-get-deps==0.2.0
 mkl-service==2.5.2
-mkl_fft @ file:///C:/b/abs_64riv3lfyn/croot/mkl_fft_1751310924052/work
-mkl_random @ file:///C:/b/abs_47jvsmau4j/croot/mkl_random_1751310922820/work
 mlflow==3.4.0
 mlflow-skinny==3.4.0
 mlflow-tracing==3.4.0
@@ -159,7 +157,6 @@ networkx==3.5
 notebook==7.4.7
 notebook_shim==0.2.4
 numba==0.62.1
-numpy @ file:///C:/miniconda3/conda-bld/numpy_and_numpy_base_1757670256083/work/dist/numpy-2.3.3-cp313-cp313-win_amd64.whl#sha256=d9474e66189cba52ea8e11316ddea0a38ae7f8fc06e3ef798d9bbfddc6ba51a5
 omegaconf==2.3.0
 openapi-core==0.19.5
 openapi-pydantic==0.5.1
@@ -224,8 +221,6 @@ ruamel.yaml.clib==0.2.14
 ruff==0.13.3
 s3fs==2025.9.0
 s3transfer==0.13.1
-scikit-learn @ file:///C:/miniconda3/conda-bld/scikit-learn_1758619682247/work
-scipy @ file:///C:/miniconda3/conda-bld/scipy_1759489068917/work/dist/scipy-1.16.2-cp313-cp313-win_amd64.whl#sha256=eb400e6df73e5b174b3f26cd8154adb3247e9d8c205b773b3080a2f9379b9899
 scmrepo==3.5.2
 seaborn==0.13.2
 semver==3.0.4
@@ -250,7 +245,6 @@ streamlit==1.50.0
 tabulate==0.9.0
 tenacity==9.1.2
 terminado==0.18.1
-threadpoolctl @ file:///C:/b/abs_3904pspv77/croot/threadpoolctl_1731006105881/work
 tinycss2==1.4.0
 toml==0.10.2
 tomlkit==0.13.3
@@ -281,3 +275,5 @@ xgboost==3.0.5
 yarl==1.22.0
 zc.lockfile==4.0
 zipp==3.23.0
+loguru==0.7.2
+python-dotenv==1.0.1
