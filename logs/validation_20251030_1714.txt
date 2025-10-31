@@ -2,7 +2,7 @@
   VALIDACIÓN COMPLETA DEL PROYECTO MLOps
   Raíz del proyecto : C:/dev/mna-mlops-team46
   Módulo Python      : german_credit_ml
-  Fecha de ejecución : Wed, Oct 29, 2025  8:50:50 PM
+  Fecha de ejecución : Thu, Oct 30, 2025  5:14:47 PM
 ==============================================================
 
 --------------------------------------------------------------
@@ -15,7 +15,7 @@ mna-mlops-team46/
    ├─ README.md                                                       [PRESENTE]
    ├─ LICENSE                           (opcional pero recomendado)   [PRESENTE]
    ├─ .gitignore                                                      [PRESENTE]
-   ├─ .env.example                      (variables, sin secretos)     [FALTA-RECOMENDADO]
+   ├─ .env.example                      (variables, sin secretos)     [PRESENTE]
    ├─ pyproject.toml     (o requirements.txt + setup.cfg)             [PRESENTE]
    ├─ Makefile                          (tareas comunes)              [PRESENTE]
    ├─ data/                                                           [PRESENTE]
@@ -23,19 +23,19 @@ mna-mlops-team46/
    │  ├─ interim/                       (steps intermedios)           [PRESENTE]
    │  └─ processed/                     (dataset limpio para modeling)[PRESENTE]
    ├─ models/                           (artefactos entrenados)       [PRESENTE]
-   ├─ notebooks/                        (numerados: 0x-... con autor y propósito)[PRESENTE]
+   ├─ notebooks/                        (numerados: 0x-autor-propósito)[PRESENTE]
    ├─ reports/                          (figuras, tablas)             [PRESENTE]
    ├─ german_credit_ml/                 (paquete Python principal del proyecto)[PRESENTE]
    │  ├─ __init__.py                                                  [PRESENTE]
-   │  ├─ data/                          (IO de datos)                 [FALTA-RECOMENDADO]
-   │  ├─ features/                      (featurización)               [FALTA-RECOMENDADO]
-   │  ├─ models/                        (train, predict, evaluate)    [FALTA-RECOMENDADO]
-   │  └─ utils/                         (helpers/utilidades compartidas)[FALTA-RECOMENDADO]
+   │  ├─ data/                          (IO de datos)                 [PRESENTE]
+   │  ├─ features/                      (featurización)               [PRESENTE]
+   │  ├─ models/ (o modeling/)          (train, predict, evaluate)    [PRESENTE]
+   │  └─ utils/                         (helpers/utilidades compartidas)[PRESENTE]
    ├─ tests/                            (pytest)                      [PRESENTE]
    ├─ dvc.yaml                          (si usas DVC)                 [PRESENTE]
    ├─ params.yaml                       (hiperparámetros/config)      [PRESENTE]
    ├─ mlruns/                           (si MLflow local)             [PRESENTE]← puede estar ignorado
-   └─ .pre-commit-config.yaml           (formato/linters)             [FALTA-RECOMENDADO]
+   └─ .pre-commit-config.yaml           (formato/linters)             [PRESENTE]
 
 Leyenda de estados:
   [PRESENTE]           Elemento encontrado en el repo
@@ -49,16 +49,16 @@ Ejecutando 02_check_refactor.py ...
 
 2) Refactorización y modularización del código — Chequeo estático
 -----------------------------------------------------------------
-src/german_credit_ml/ (visión lógica)
-├─ preprocess.py                             [FALTA-REQUERIDO]
-├─ train.py                                  [FALTA-REQUERIDO]
-└─ evaluate.py                               [FALTA-REQUERIDO]
+german_credit_ml/ (visión lógica de pipeline ML)
+├─ preprocess.py                                  [PRESENTE]
+├─ train.py (incluye modeling/train.py)           [PRESENTE]
+└─ evaluate.py (incluye modeling/evaluate.py)     [PRESENTE]
 
 Funciones por responsabilidad (mínimos por módulo)
 --------------------------------------------------
-preprocess.py                 [FALTA-REQUERIDO]   No encontrado.
-train.py                      [FALTA-REQUERIDO]   No encontrado.
-evaluate.py                   [FALTA-REQUERIDO]   No encontrado.
+preprocess.py                 [PRESENTE]   german_credit_ml\modeling\preprocess.py -> OK
+train.py                      [PRESENTE]   german_credit_ml\modeling\train.py -> OK
+evaluate.py                   [PRESENTE]   german_credit_ml\modeling\evaluate.py -> OK
 
 POO sugerida (clases reutilizables)
 -----------------------------------
@@ -66,12 +66,12 @@ Clases sugeridas              [FALTA-RECOMENDADO]   No se detectaron ['ModelTrai
 
 Pruebas unitarias básicas (pytest)
 ----------------------------------
-tests/test_*.py               [PRESENTE]   tests\test_data.py
+tests/test_*.py               [PRESENTE]   tests\test_data.py, tests\test_preprocess.py
 
 Buenas prácticas (docstrings, type hints, main guard)
 -----------------------------------------------------
-Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.00 (14 funcs)
-Type hints funciones (>=30%)  [PRESENTE]   ratio=0.50
+Docstrings funciones (>=50%)  [FALTA-RECOMENDADO]   ratio=0.31 (65 funcs)
+Type hints funciones (>=30%)  [PRESENTE]   ratio=0.60
 __main__ en scripts           [PRESENTE]   OK
 
 Leyenda de estados:
@@ -81,46 +81,39 @@ Leyenda de estados:
   [FALTA-OPCIONAL]     Depende del contexto del proyecto
 
 Sugerencias:
- - Crea src/german_credit_ml/preprocess.py (carga/limpieza/features básicas).
- - Crea src/german_credit_ml/train.py (entrenamiento; registra métricas/artefactos).
- - Crea src/german_credit_ml/evaluate.py (evaluación; reporte de métricas).
  - Añade docstrings breves a funciones públicas (qué hace, entradas, salidas).
 
 --------------------------------------------------------------
 Ejecutando 03_check_sklearn_pipeline.py ...
 --------------------------------------------------------------
 
-3) Mejores prácticas del pipeline con Scikit-Learn — Chequeo estático (módulo german_credit_ml, raíz C:\dev\mna-mlops-team46)
------------------------------------------------------------------------------------------------------------------------------
-Pipeline (sklearn.pipeline.Pipeline/make_pipeline)                    [FALTA-REQUERIDO]
-Preprocesamiento con ColumnTransformer                                [FALTA-REQUERIDO]
-Transformadores: SimpleImputer                                        [FALTA-REQUERIDO]
-Transformadores: StandardScaler                                       [FALTA-REQUERIDO]
-Transformadores: OneHotEncoder                                        [FALTA-REQUERIDO]
-train_test_split                                                      [PRESENTE]
-Métricas de sklearn.metrics (evaluación)                              [FALTA-REQUERIDO]
-Validación: cross_val_score                                           [FALTA-RECOMENDADO]
-Tuning: GridSearchCV/RandomizedSearchCV                               [PRESENTE]
-Reproducibilidad: uso de random_state                                 [PRESENTE]
-Persistencia/registro del modelo (joblib o MLflow)                    [PRESENTE]
-Lectura de configuración (params.yaml)                                [PRESENTE]
-Docstrings en funciones de pipeline (>=50%)                           [FALTA-RECOMENDADO]   ratio=0.00 (sobre 14 funciones)
+3) Aplicaci�n de Mejores Pr�cticas de Codificaci�n en el Pipeline de Modelado
+----------------------------------------------------------------------------
+Archivos analizados:
+  - C:\dev\mna-mlops-team46\german_credit_ml\preprocess.py (NO EXISTE)
+  - C:\dev\mna-mlops-team46\german_credit_ml\modeling\train.py (OK)
+  - C:\dev\mna-mlops-team46\german_credit_ml\modeling\evaluate.py (OK)
 
-Leyenda de estados:
-  [PRESENTE]           Regla satisfecha
-  [FALTA-REQUERIDO]    Debe corregirse para cumplir mejores prácticas mínimas
-  [FALTA-RECOMENDADO]  Muy aconsejable para robustez y mantenibilidad
-  [FALTA-OPCIONAL]     Según contexto
+Pipeline (sklearn.pipeline.Pipeline/make_pipeline)                [PRESENTE]
+Preprocesamiento con ColumnTransformer                            [PRESENTE]
+Imputaci�n (SimpleImputer)                                        [PRESENTE]
+Escalado num�rico (StandardScaler)                                [FALTA-RECOMENDADO]
+Codificaci�n categ�rica (OneHotEncoder)                           [PRESENTE]
+train_test_split con random_state reproducible                    [PRESENTE]
+Validaci�n cruzada (cross_val_score)                              [PRESENTE]
+B�squeda de hiperpar�metros (GridSearchCV / RandomizedSearchCV)   [FALTA-RECOMENDADO]
+M�tricas sklearn.metrics registradas                              [PRESENTE]
+Persistencia de modelo/artefactos (joblib/pickle/mlflow.sklearn.log_model) [PRESENTE]
+Registro en MLflow (par�metros, m�tricas, artefactos)             [PRESENTE]
+Uso de params.yaml / YAML como configuraci�n declarativa          [FALTA-RECOMENDADO]
+Docstrings funciones p�blicas (>=0.50) ratio=0.25 (20 funcs)      [FALTA-RECOMENDADO]
 
-Sugerencias:
- - Crea un sklearn.pipeline.Pipeline o make_pipeline que encadene preprocesamiento + modelo.
- - Usa sklearn.compose.ColumnTransformer para separar numéricas/categóricas.
- - Añade SimpleImputer para completar faltantes (num y/o cat).
- - Añade StandardScaler para variables numéricas (si aplica).
- - Añade OneHotEncoder(handle_unknown='ignore') para categóricas.
- - Calcula y registra métricas (accuracy/precision/recall/F1/ROC-AUC según el caso).
- - Añade cross_val_score para estimar desempeño promedio/varianza.
- - Añade docstrings a funciones que construyen el pipeline/entrenan/evalúan.
+Notas:
+ - 'REQUERIDO' = debe estar para cumplir buenas pr�cticas m�nimas de un pipeline reproducible.
+ - 'RECOMENDADO' = suma madurez MLOps (mantenibilidad, trazabilidad, gobernanza).
+ - Este validador combina preprocess + train + evaluate. No necesitas repetir c�digo en un solo archivo.
+ - pipeline=True implica que el modelo final est� empacado como Pipeline sklearn, no solo el estimador.
+ - column_transformer=True implica que el preprocesamiento declarativo se hace v�a ColumnTransformer, aunque viva en otra clase como PreprocessorFactory.
 
 --------------------------------------------------------------
 Ejecutando 04_check_tracking_models.py ...
@@ -140,12 +133,12 @@ Runs con métricas (metrics/)                                      [PRESENTE]
 Runs con artifacts (artifacts/)                                   [PRESENTE]
 Artifacts de modelo MLflow (artifacts/model/MLmodel)              [FALTA-RECOMENDADO]
 Artifacts de visualización (png/html/pdf) en mlruns/              [PRESENTE]
-Modelos versionados en models/ (*.joblib|*.pkl|*.onnx|*.pt…)      [PRESENTE]
+Artefactos de modelo versionados (carpeta models/ o MLflow)       [PRESENTE]
 DVC: dvc.yaml (pipeline/datos versionados)                        [PRESENTE]
 DVC: dvc.lock (congelado de pipeline/datos)                       [PRESENTE]
 DVC: .dvc/config (remotos configurados)                           [PRESENTE]
 DVC: remoto configurado (alguno)                                  [FALTA-REQUERIDO]
-DVC: remoto S3 (recomendado en tu proyecto)                       [PRESENTE]
+DVC: remoto S3 (recomendado en tu proyecto)                       [FALTA-RECOMENDADO]
 DVC: archivos .dvc (datos bajo control de DVC)                    [PRESENTE]
 params.yaml con claves (hiperparámetros/config)                   [PRESENTE]
 README: cómo reproducir/ejecutar (make/pipeline)                  [PRESENTE]

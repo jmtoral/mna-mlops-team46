@@ -1,7 +1,11 @@
 from typing import Dict
+
 from sklearn.metrics import (
-    accuracy_score, precision_recall_fscore_support, roc_auc_score
+    accuracy_score,
+    precision_recall_fscore_support,
+    roc_auc_score,
 )
+
 
 def classification_report_dict(y_true, y_pred, y_proba=None) -> Dict[str, float]:
     acc = accuracy_score(y_true, y_pred)

@@ -3,7 +3,6 @@
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from pyfiglet import Figlet
 
 # Crea una instancia de la consola que importarás en otros scripts
 console = Console()
@@ -59,27 +58,28 @@ ASCII_ART2 = r"""
 
 """
 
+
 def print_header():
     """Imprime un encabezado estilizado para el proyecto."""
-    
+
     # Imprimir el arte ASCII con un color específico (ej. magenta)
     console.print(ASCII_ART, style="bold magenta")
-    
+
     console.print(ASCII_ART2, style="green")
-    
+
     # Información del proyecto en un panel
     info_panel = Panel(
         Text(
             "Equipo: 46\n"
             "Curso: Operaciones de Aprendizaje Automático (MLOps)\n"
             "Periodo: Sep – Dic 2025",
-            justify="left"
+            justify="left",
         ),
         title="[bold yellow]Información del Proyecto[/bold yellow]",
         border_style="yellow",
         expand=False,
-        padding=(1, 2) # Añadir un poco de espacio interior
+        padding=(1, 2),  # Añadir un poco de espacio interior
     )
-    
+
     console.print(info_panel)
-    console.rule("[bold green]Iniciando Pipeline[/bold green]") # Separador estilizado
+    console.rule("[bold green]Iniciando Pipeline[/bold green]")  # Separador estilizado

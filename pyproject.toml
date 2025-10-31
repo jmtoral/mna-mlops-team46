@@ -30,21 +30,3 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["german_credit_ml"]
 force-sort-within-sections = true
 
-#OPP
-[project]
-name = "credit-risk-mlops"
-version = "0.1.0"
-requires-python = ">=3.10"
-dependencies = [
-  "pandas",
-  "numpy",
-  "scikit-learn",
-  "mlflow",
-  "matplotlib",
-  "seaborn",
-  "pyyaml",
-  "typer"
-]
-
-[tool.setuptools.packages.find]
-where = ["src"]

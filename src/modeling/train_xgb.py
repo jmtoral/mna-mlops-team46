@@ -1,28 +1,32 @@
 # src/modeling/train_xgb.py
-import argparse, json, os, subprocess, getpass, socket
+import argparse
 from datetime import datetime
+import getpass
+import json
+import os
 from pathlib import Path
+import socket
+import subprocess
 
-import numpy as np
-import pandas as pd
+import cloudpickle
 import matplotlib.pyplot as plt
-
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder 
-
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    f1_score, roc_auc_score, accuracy_score, precision_score, recall_score,
-    ConfusionMatrixDisplay
-)
-
-from xgboost import XGBClassifier
-
 import mlflow
-from mlflow.models import infer_signature
-import sklearn, cloudpickle
+import pandas as pd
+import sklearn
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from xgboost import XGBClassifier
 
 
 def parse_args():
@@ -31,17 +35,21 @@ def parse_args():
     p.add_argument("--model-output", default="models/xgboost_model.pkl")
     # En dvc.yaml pasas --metrics-output y --plots-output (un directorio)
     p.add_argument("--metrics-output", default="reports/metrics.json")
-    p.add_argument("--plots-output",   default="reports/figures/training")
+    p.add_argument("--plots-output", default="reports/figures/training")
     p.add_argument("--mlflow-experiment", default="fase1_modelado_equipo46")
     return p.parse_args()
 
 
 def main(args):
     # === MLflow: tracking local por defecto (evita mezclar con otros) ===
-    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", f"file:{Path.cwd()/'mlruns'}"))
+    mlflow.set_tracking_uri(
+        os.getenv("MLFLOW_TRACKING_URI", f"file:{Path.cwd()/'mlruns'}")
+    )
     mlflow.set_experiment(os.getenv("MLFLOW_EXPERIMENT_NAME", args.mlflow_experiment))
 
-    run_name = f"train_xgb_{getpass.getuser()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_name = (
+        f"train_xgb_{getpass.getuser()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
     if mlflow.active_run():  # por si quedó algo abierto
         mlflow.end_run()
 
@@ -50,10 +58,18 @@ def main(args):
         mlflow.set_tag("author", getpass.getuser())
         mlflow.set_tag("host", socket.gethostname())
         try:
-            mlflow.set_tag("git_branch", subprocess.check_output(
-                ["git","rev-parse","--abbrev-ref","HEAD"]).decode().strip())
-            mlflow.set_tag("git_commit", subprocess.check_output(
-                ["git","rev-parse","--short","HEAD"]).decode().strip())
+            mlflow.set_tag(
+                "git_branch",
+                subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+                .decode()
+                .strip(),
+            )
+            mlflow.set_tag(
+                "git_commit",
+                subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+                .decode()
+                .strip(),
+            )
         except Exception:
             pass
         mlflow.set_tag("dvc_stage", "train")
@@ -76,15 +92,17 @@ def main(args):
         )
         print("Datos divididos en train/test.")
 
-        #==== PASO 2: Preprocesamiento + Entrenamiento (Pipeline) ====
+        # ==== PASO 2: Preprocesamiento + Entrenamiento (Pipeline) ====
         num_cols = X_train.select_dtypes(include=["number"]).columns.tolist()
         cat_cols = [c for c in X_train.columns if c not in num_cols]
 
         num_transformer = SimpleImputer(strategy="median")  # XGB no necesita escalar
-        cat_transformer = Pipeline(steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("ohe", OneHotEncoder(handle_unknown="ignore", sparse_output=False))
-        ])
+        cat_transformer = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("ohe", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+            ]
+        )
 
         # ColumnTransformer que aplica cada paso a sus columnas
         preprocessor = ColumnTransformer(
@@ -92,9 +110,8 @@ def main(args):
                 ("num", num_transformer, num_cols),
                 ("cat", cat_transformer, cat_cols),
             ],
-            remainder="drop"   # o "passthrough" si quieres dejar columnas no listadas
+            remainder="drop",  # o "passthrough" si quieres dejar columnas no listadas
         )
-
 
         # === PASO 2: Entrenamiento (XGBoost) ===
         print("\n==== PASO 2: Entrenamiento del Modelo ====")
@@ -112,29 +129,33 @@ def main(args):
         }
         print("Parámetros XGBoost:", params)
 
-        #model = XGBClassifier(**params)
-        #model.fit(X_train, y_train)
+        # model = XGBClassifier(**params)
+        # model.fit(X_train, y_train)
 
-        pipeline = Pipeline(steps=[
-            ("preprocess", preprocessor),
-            ("clf", XGBClassifier(**params)),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                ("preprocess", preprocessor),
+                ("clf", XGBClassifier(**params)),
+            ]
+        )
 
         # Entrenar el pipeline con los datos crudos (sin transformar)
         pipeline.fit(X_train, y_train)
 
         # === PASO 3: Evaluación ===
         print("\n==== PASO 3: Evaluación, Guardado y Registro ====")
-        y_pred  = pipeline.predict(X_test)
+        y_pred = pipeline.predict(X_test)
         y_proba = pipeline.predict_proba(X_test)[:, 1]
 
-        f1  = f1_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred)
         auc = roc_auc_score(y_test, y_proba)
         acc = accuracy_score(y_test, y_pred)
         pre = precision_score(y_test, y_pred, zero_division=0)
         rec = recall_score(y_test, y_pred, zero_division=0)
 
-        print(f"F1: {f1:.4f} | ROC-AUC: {auc:.4f} | Acc: {acc:.4f} | Prec: {pre:.4f} | Rec: {rec:.4f}")
+        print(
+            f"F1: {f1:.4f} | ROC-AUC: {auc:.4f} | Acc: {acc:.4f} | Prec: {pre:.4f} | Rec: {rec:.4f}"
+        )
 
         # === Guardar métricas JSON (para DVC) ===
         metrics = {
@@ -166,7 +187,8 @@ def main(args):
 
         # (Opcional) curvas ROC y PR como evidencia
         try:
-            from sklearn.metrics import RocCurveDisplay, PrecisionRecallDisplay
+            from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
+
             fig_roc = plt.figure()
             RocCurveDisplay.from_predictions(y_test, y_proba)
             plt.title("ROC (XGB)")
@@ -184,10 +206,10 @@ def main(args):
             pass
 
         # === Guardar modelo (pickle) ===
-        import joblib
+
         model_out = Path(args.model_output)
         model_out.parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(model, model_out)
+        # joblib.dump(model, model_out)
         print(f"→ Modelo guardado en: {model_out}")
 
         # === Log a MLflow: métricas, artefactos y modelo ===
@@ -200,38 +222,40 @@ def main(args):
             mlflow.log_artifact(str(mout))
         if cm_path.exists():
             mlflow.log_artifact(str(cm_path), artifact_path="figures")
-        if 'roc_path' in locals() and Path(roc_path).exists():
+        if "roc_path" in locals() and Path(roc_path).exists():
             mlflow.log_artifact(str(roc_path), artifact_path="figures")
-        if 'pr_path' in locals() and Path(pr_path).exists():
+        if "pr_path" in locals() and Path(pr_path).exists():
             mlflow.log_artifact(str(pr_path), artifact_path="figures")
 
         # Firma + ejemplo de entrada
         X_example = X_test.iloc[:5].copy()
-        signature = infer_signature(X_example, model.predict_proba(X_example)[:, 1])
+        # signature = infer_signature(X_example, model.predict_proba(X_example)[:, 1])
 
         # Evitar pip freeze lento
         pip_reqs = [
             f"scikit-learn=={sklearn.__version__}",
             f"cloudpickle=={cloudpickle.__version__}",
             "xgboost",
-            "numpy", "pandas", "matplotlib", "mlflow", "joblib"
+            "numpy",
+            "pandas",
+            "matplotlib",
+            "mlflow",
+            "joblib",
         ]
 
         try:
             mlflow.sklearn.log_model(
                 sk_model=pipeline,
-                name="model",                     # MLflow nuevo
+                name="model",  # MLflow nuevo
                 input_example=X_example,
-                signature=signature,
-                pip_requirements=pip_reqs
+                pip_requirements=pip_reqs,
             )
         except TypeError:
             mlflow.sklearn.log_model(
                 sk_model=pipeline,
-                artifact_path="model",            # compatibilidad
+                artifact_path="model",  # compatibilidad
                 input_example=X_example,
-                signature=signature,
-                pip_requirements=pip_reqs
+                pip_requirements=pip_reqs,
             )
 
         print("\nRun MLflow completado.")
@@ -240,4 +264,3 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
-
