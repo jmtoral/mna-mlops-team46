@@ -41,6 +41,10 @@ def evaluate_model(model_path: Path, test_csv: Path, target_col: str, output_dir
 
 
 if __name__ == "__main__":
+    '''
+    Ejecuta la evaluación del modelo con parámetros de ejemplo.
+    Ajusta las rutas según sea necesario para tu entorno local. 
+    '''
     # Ejemplo de ejecución directa para validación local / demo:
     from pathlib import Path
 
