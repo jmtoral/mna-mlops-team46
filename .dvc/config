@@ -1,6 +1,6 @@
 [core]
     remote = s3remote
-['remote "s3remote"']
+[remote "s3remote"]
     url = s3://equipo46-dvc
     region = eu-north-1
     endpointurl = https://s3.eu-north-1.amazonaws.com
