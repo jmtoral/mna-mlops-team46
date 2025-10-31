@@ -10,6 +10,13 @@ def evaluate_model(model_path: Path, test_csv: Path, target_col: str, output_dir
     """
     Evalúa un modelo ya entrenado contra un conjunto de prueba y
     genera métricas, curvas, matriz de confusión y análisis SHAP.
+    Args:
+        model_path (Path): Ruta al archivo del modelo entrenado (pickle).
+        test_csv (Path): Ruta al archivo CSV del conjunto de prueba.
+        target_col (str): Nombre de la columna objetivo en el conjunto de prueba.
+        output_dir (Path): Directorio donde se guardarán los artefactos de evaluación.
+    Returns:
+        dict: Métricas de evaluación calculadas.
     """
     df_test = pd.read_csv(test_csv)
     X_test = df_test.drop(columns=target_col)

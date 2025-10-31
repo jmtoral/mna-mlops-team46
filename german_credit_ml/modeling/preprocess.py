@@ -14,6 +14,9 @@ Esto responde al requisito de la Fase 2:
 "Implementa un pipeline de Scikit-Learn que automatice las etapas de
 preprocesamiento, entrenamiento y evaluación", y hace explícita la
 etapa de preprocesamiento como módulo separado.
+Parámetros:
+----------
+df : pd.DataFrame
 """
 
 from pathlib import Path

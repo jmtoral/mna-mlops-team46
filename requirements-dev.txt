@@ -20,7 +20,7 @@ asyncssh==2.21.1
 atpublic==6.0.2
 attrs==25.3.0
 Authlib==1.6.5
-awscli==1.42.45
+awscli #==1.32.45
 babel==2.17.0
 beautifulsoup4==4.14.2
 billiard==4.2.2
@@ -275,5 +275,5 @@ xgboost==3.0.5
 yarl==1.22.0
 zc.lockfile==4.0
 zipp==3.23.0
-loguru==0.7.2
-python-dotenv==1.0.1
+#loguru==0.7.2
+#python-dotenv==1.0.1
