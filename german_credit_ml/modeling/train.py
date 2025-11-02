@@ -26,7 +26,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-# --- Importaciones de Rich y utilidades ---
+# --- Utilidades ---
 from german_credit_ml.utils import console, print_header # Importar consola y header
 from rich.table import Table # Importar tabla de Rich
 
