@@ -1,10 +1,11 @@
 from pathlib import Path
-from loguru import logger
-import typer
-import pandas as pd
 
+from loguru import logger
+import pandas as pd
+import typer
+
+from german_credit_ml.clean import cast_types, impute_and_enforce, normalize_credit_risk
 from german_credit_ml.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
-from german_credit_ml.clean import normalize_credit_risk, cast_types, impute_and_enforce
 
 app = typer.Typer()
 
