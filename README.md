@@ -1,6 +1,6 @@
 # 💳 Credit Risk MLOps - German Credit Dataset
 
-<div align="center"\>
+<div align="center">
 
 **MLOps Team 46 - Proyecto de Clasificación de Riesgo Crediticio**
 
@@ -13,7 +13,7 @@
 [](https://www.google.com/search?q=%23-uso-del-pipeline-automatizado)
 [](https://www.google.com/search?q=%23-instalaci%C3%B3n)
 
-</div\>
+</div>
 
 -----
 
@@ -284,6 +284,6 @@ Para interactuar con el modelo y realizar predicciones en tiempo real:
 
 -----
 
-<div align="center"\>
+<div align="center">
 Desarrollado con ❤️ por el Equipo 46 | MNA
-</div\>
+</div>
