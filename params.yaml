@@ -11,3 +11,6 @@ train:
   model_output: models/xgboost_model_prueba.pkl # <-- CAMBIA .joblib por .pkl
   metrics_output: reports/metrics.json
   plots_output: reports/figures/training
+
+reports:
+  data_drift: reports/data_drift_report.html
