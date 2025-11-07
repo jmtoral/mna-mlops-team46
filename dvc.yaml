@@ -36,14 +36,3 @@ stages:
         cache: false
     params:
     - train
-  check_drift:
-    cmd: python -m german_credit_ml.check_drift --input-data 
-      data/processed/german_credit_clean.csv --report-output 
-      ${reports.data_drift}
-    deps:
-    - data/processed/german_credit_clean.csv
-    - german_credit_ml/check_drift.py
-    params:
-    - reports.data_drift
-    outs:
-    - ${reports.data_drift}
