@@ -79,3 +79,24 @@ stages:
       hash: md5
       md5: 5f660e46dfcf902cbfd7878297e7ae44
       size: 1554
+  check_drift:
+    cmd: python -m german_credit_ml.check_drift --input-data 
+      data/processed/german_credit_clean.csv --report-output 
+      reports/data_drift_report.html
+    deps:
+    - path: data/processed/german_credit_clean.csv
+      hash: md5
+      md5: 8072a5cf26c1cbf09f217b5007ccae79
+      size: 77492
+    - path: german_credit_ml/check_drift.py
+      hash: md5
+      md5: d11ab563d67f23bc39f75e659917913a
+      size: 12472
+    params:
+      params.yaml:
+        reports.data_drift: reports/data_drift_report.html
+    outs:
+    - path: reports/data_drift_report.html
+      hash: md5
+      md5: 1f6790a680fd42db3bea00a2b00c8811
+      size: 110
