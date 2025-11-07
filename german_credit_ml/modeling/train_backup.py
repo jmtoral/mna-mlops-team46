@@ -26,10 +26,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-# --- Importaciones de Rich y utilidades ---
+# --- Utilidades ---
 from german_credit_ml.utils import console, print_header # Importar consola y header
 from rich.table import Table # Importar tabla de Rich
-from german_credit_ml.drift_utils import run_drift_analysis # Importar chequeo de drift
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -51,13 +50,15 @@ class TrainConfig:
     xgb_params: Dict = None
     experiment_name: str = "German Credit XGBoost"
 
-    def get_xgb_params(self) -> Dict:
+    def get_xgb_params(self) -> Dict: # Renombrado de xgb a get_xgb_params
         """Devuelve los parámetros base de XGBoost actualizados con los específicos."""
         base = dict(
             n_estimators=150, max_depth=5, learning_rate=0.1,
             subsample=0.8, colsample_bytree=0.8,
             eval_metric="logloss", random_state=self.random_state
         )
+        # Asegurarse de que use_label_encoder no esté presente si no es necesario
+        # base.pop('use_label_encoder', None)
         if self.xgb_params:
             base.update(self.xgb_params)
         return base
@@ -91,7 +92,7 @@ class PreprocessorFactory:
     def build(X_train: pd.DataFrame) -> ColumnTransformer:
         console.print("\n[bold green][INFO][/bold green] Definiendo pipeline de preprocesamiento...")
         num_cols = X_train.select_dtypes(include=np.number).columns.tolist()
-        cat_cols = X_train.select_dtypes(exclude=np.number).columns.tolist()
+        cat_cols = X_train.select_dtypes(exclude=np.number).columns.tolist() # Corrección aquí
         console.print(f"  -> {len(num_cols)} cols numéricas, {len(cat_cols)} cols categóricas.")
 
         num_transformer = SimpleImputer(strategy="median")
@@ -113,13 +114,13 @@ class Evaluator:
     @staticmethod
     def compute_metrics(y_true, y_pred, y_proba) -> Dict[str, float]:
         console.print("\n[bold green][INFO][/bold green] Calculando métricas de evaluación...")
-        report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+        report = classification_report(y_true, y_pred, output_dict=True, zero_division=0) # Añadir zero_division
         metrics = {
             "f1_score_test": report.get('1', {}).get('f1-score', 0.0),
             "accuracy_test": report.get('accuracy', 0.0),
             "precision_test": report.get('1', {}).get('precision', 0.0),
             "recall_test": report.get('1', {}).get('recall', 0.0),
-            "auc_test": roc_auc_score(y_true, y_proba) if len(np.unique(y_true)) > 1 else 0.5,
+            "auc_test": roc_auc_score(y_true, y_proba) if len(np.unique(y_true)) > 1 else 0.5, # Handle cases with only one class
             "bad_rate_test": float(np.mean(y_pred == 0)),
         }
         console.print("[bold bright_green][SUCCESS][/bold bright_green] Métricas calculadas.")
@@ -139,7 +140,7 @@ class Evaluator:
     @staticmethod
     def plot_roc(y_true, y_proba, outpath: Path, auc_val: float):
         console.print(f"  -> Generando Curva ROC en [cyan]{outpath.name}[/cyan]...")
-        if len(np.unique(y_true)) > 1:
+        if len(np.unique(y_true)) > 1: # Only plot ROC if both classes are present
             fpr, tpr, _ = roc_curve(y_true, y_proba)
             plt.figure(figsize=(8, 6))
             plt.plot(fpr, tpr, color='darkorange', lw=2, label=f"Curva ROC (AUC = {auc_val:.2f})")
@@ -265,7 +266,6 @@ class Trainer:
     def build_model(self, preprocessor: ColumnTransformer) -> Pipeline:
         """Construye el pipeline final (preprocesador + clasificador)."""
         console.print("\n[bold green][INFO][/bold green] Construyendo pipeline final...")
-        # Usar get_xgb_params() para obtener el diccionario
         xgb_clf = xgb.XGBClassifier(**self.cfg.get_xgb_params())
         model = Pipeline(steps=[("preprocessor", preprocessor), ("clf", xgb_clf)])
         console.print("[bold bright_green][SUCCESS][/bold bright_green] Pipeline construido.")
@@ -280,36 +280,6 @@ class Trainer:
         data_module = DataModule(self.paths.input_data)
         X, y = data_module.load()
         X_train, X_test, y_train, y_test = data_module.split(X, y, self.cfg)
-        
-        # --- INICIO: Bloque de Chequeo de Deriva ---
-        console.print("\n[bold green][INFO][/bold green] PASO 1.5: Chequeo de Deriva (Train vs. Test)...")
-        try:
-            # Usar X_train como referencia y X_test como "actual"
-            drift_results_df = run_drift_analysis(X_train, X_test)
-            
-            # Crear una tabla de Rich para mostrar los resultados
-            drift_table = Table(title="📊 Reporte de Deriva de Datos (Train vs. Test)")
-            drift_table.add_column("Columna", style="cyan", no_wrap=True)
-            drift_table.add_column("Tipo", style="default")
-            drift_table.add_column("Métrica", style="default")
-            drift_table.add_column("Valor", style="magenta")
-            drift_table.add_column("Drift Detectado", style="default")
-
-            for _, row in drift_results_df.iterrows():
-                drift_style = "bold red" if row["Drift Detectado"] == "🚨 SÍ" else "bold green"
-                drift_table.add_row(
-                    row["Columna"],
-                    row["Tipo"],
-                    row["Métrica"],
-                    row["Valor"],
-                    f"[{drift_style}]{row['Drift Detectado']}[/{drift_style}]"
-                )
-            
-            console.print(drift_table)
-            
-        except Exception as e:
-            console.print(f"[bold red]ERROR:[/bold red] Falló el chequeo de deriva: {e}")
-        # --- FIN: Bloque de Chequeo de Deriva ---
 
         # --- Preprocesamiento ---
         preprocessor = PreprocessorFactory.build(X_train)
@@ -330,9 +300,7 @@ class Trainer:
         metrics_table = Table(title="📊 Métricas de Evaluación (Conjunto de Prueba)")
         metrics_table.add_column("Métrica", style="cyan", no_wrap=True)
         metrics_table.add_column("Valor", style="magenta")
-        # Asegurarse de iterar sobre el diccionario de métricas calculado
         for k, v in metrics.items():
-            # Formatear nombre de la métrica para la tabla
             metric_name = k.replace('_test', '').replace('_', ' ').title()
             metrics_table.add_row(metric_name, f"{v:.4f}")
         console.print(metrics_table)
@@ -343,7 +311,7 @@ class Trainer:
         cm_path = plots_dir / "confusion_matrix.png"
         roc_path = plots_dir / "roc_curve.png"
         Evaluator.plot_confusion_matrix(y_test, y_pred, cm_path)
-        Evaluator.plot_roc(y_test, y_proba, roc_path, metrics.get("auc_test", 0.0)) # Usar get por seguridad
+        Evaluator.plot_roc(y_test, y_proba, roc_path, metrics.get("auc_test", 0.0))
         console.print(f"[bold bright_green][SUCCESS][/bold bright_green] Gráficas de evaluación guardadas.")
 
         # --- SHAP ---
@@ -374,13 +342,12 @@ class Trainer:
 
         # Guardar Métricas .json para DVC
         try:
-            # Asegurarse que clf está definido aquí o extraerlo de 'model'
             clf_params = model.named_steps["clf"].get_params()
         except AttributeError:
-            clf_params = {} # Fallback si 'clf' no existe o no tiene get_params
+            clf_params = {}
         metrics_to_save = {**metrics, "params": clf_params}
         with open(self.paths.metrics_output, "w") as f:
-            json.dump(metrics_to_save, f, indent=4, default=str) # Usar default=str
+            json.dump(metrics_to_save, f, indent=4, default=str)
         console.print(f" -> Métricas guardadas para DVC en: [cyan]{self.paths.metrics_output}[/cyan]")
 
         # Registro en MLflow
