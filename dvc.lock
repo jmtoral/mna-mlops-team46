@@ -90,13 +90,13 @@ stages:
       size: 77492
     - path: german_credit_ml/check_drift.py
       hash: md5
-      md5: d11ab563d67f23bc39f75e659917913a
-      size: 12472
+      md5: 4fbe538bf539b726fe3197e834b02475
+      size: 14262
     params:
       params.yaml:
         reports.data_drift: reports/data_drift_report.html
     outs:
     - path: reports/data_drift_report.html
       hash: md5
-      md5: 1f6790a680fd42db3bea00a2b00c8811
-      size: 110
+      md5: 40730ea81c79b23bc28d18cc24310b16
+      size: 173
