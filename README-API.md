@@ -114,6 +114,33 @@ docker build -t german-credit-api:1.0.0 .
 docker run -d `  -p 8000:8000 `  -v "${PWD}\models:/app/models:ro" `  -e MODEL_PATH=/app/models/xgboost_model.pkl `  --name credit-api `  german-credit-api:1.0.0
 ```
 
+### Usar DockerHub
+
+```bash
+Publicar una nueva versión y actualizar latest
+# Construir una nueva versión
+docker build -t german-credit-api:1.1.0 .
+
+# Etiquetar para tu repositorio en Docker Hub
+docker tag german-credit-api:1.1.0 monicadelrivero/german-credit-api:1.1.0
+
+#  Actualizar latest para que apunte a la estable
+docker tag german-credit-api:1.1.0 monicadelrivero/german-credit-api:latest
+
+# Subir ambas etiquetas
+docker push monicadelrivero/german-credit-api:1.1.0
+docker push monicadelrivero/german-credit-api:latest
+
+Cómo hacer  pull descargar la imagen 
+#Versión específica 
+docker pull monicadelrivero/german-credit-api:1.1.0
+
+#Ultima estable
+docker pull monicadelrivero/german-credit-api:latest
+
+#Ejecutar contenedor
+docker run -d -p 8000:8000 monicadelrivero/german-credit-api:latest
+```
 
 ---
 
