@@ -1,8 +1,15 @@
 """
-API FastAPI para el Modelo de Riesgo Crediticio Alemán
-Equipo: 46 | MLOps | Sep-Dic 2025
+==============================================================
+German Credit Risk API  |  Equipo 46 - MLOps  |  Sep–Dic 2025
+==============================================================
 
-Este servicio expone el modelo XGBoost entrenado para predicción de riesgo crediticio.
+Servicio FastAPI de producción para el modelo XGBoost 
+entrenado en la predicción de riesgo crediticio alemán.
+
+Este servicio proporciona endpoints RESTful para:
+- Predicciones individuales y por lotes.
+- Monitoreo del estado de salud del modelo.
+- Consulta de versión y metadatos del equipo.
 """
 
 from fastapi import FastAPI, APIRouter, HTTPException, status
