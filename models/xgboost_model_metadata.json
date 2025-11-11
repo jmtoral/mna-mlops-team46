@@ -1,5 +1,5 @@
 {
-    "mlflow_run_id": "63e531ccf2b440048c254654e4700fb1",
-    "training_timestamp_utc": "2025-11-09T02:37:30.205939Z",
+    "mlflow_run_id": "00262831371246b6a37321e7deedf7a5",
+    "training_timestamp_utc": "2025-11-11T18:57:19.067858Z",
     "model_description": "XGBoost Pipeline for German Credit Risk"
 }

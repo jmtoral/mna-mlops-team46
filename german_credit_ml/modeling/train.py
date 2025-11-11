@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 @dataclass(frozen=True)
 class Paths:
-    """Almacena las rutas necesarias para el script."""
+    """Almacena las rutas necesarias para el script!"""
     input_data: Path
     model_output: Path
     metrics_output: Path
