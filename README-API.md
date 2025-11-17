@@ -133,13 +133,13 @@ docker push monicadelrivero/german-credit-api:latest
 
 Cómo hacer  pull descargar la imagen 
 #Versión específica 
-docker pull monicadelrivero/german-credit-api:1.1.0
+docker pull monicadelrivero/german-credit-api:1.0.0
 
 #Ultima estable
 docker pull monicadelrivero/german-credit-api:latest
 
 #Ejecutar contenedor
-docker run -d -p 8000:8000 monicadelrivero/german-credit-api:latest
+docker run -d --name credit-api -p 8000:8000 -v "%cd%\models:/app/models:ro" -e MODEL_PATH=/app/models/xgboost_model.pkl german-credit-api:1.0.0
 ```
 
 ---
